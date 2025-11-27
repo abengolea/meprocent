@@ -36,7 +36,7 @@ export function PlansList({ planes }: PlansListProps) {
                         <div className="space-y-3 text-sm">
                              <div className="flex items-center gap-3">
                                 <Users className="h-4 w-4 text-muted-foreground" />
-                                <span>Aplica a: {capitalize(plan.aplicabilidad.tipoEquipo?.join(', ').replace('_', ' ') || 'N/A')}</span>
+                                <span>Aplica a: {capitalize(plan.aplicabilidad.tipoEquipo?.join(', ').replace(/_/g, ' ') || 'N/A')}</span>
                             </div>
                              <div className="flex items-center gap-3">
                                 <Clock className="h-4 w-4 text-muted-foreground" />
