@@ -12,12 +12,21 @@ export const mockUsers: User[] = [
     empresaId: 'empresa-1',
     activo: true,
     photoURL: 'https://picsum.photos/seed/user1/100/100',
-    notificacionesHabilitadas: true,
-    fcmTokens: [],
+    notificaciones: {
+      habilitadas: true,
+      fcmTokens: [],
+      preferencias: {
+        alarmasCriticas: true,
+        asignacionTareas: true,
+        aprobacionesPendientes: true,
+        reportesDiarios: true,
+      }
+    },
     metadata: {
       createdAt: subDays(now, 365),
       updatedAt: subDays(now, 1),
       lastLogin: subHours(now, 2),
+      createdBy: 'user-1',
     },
   },
   {
@@ -28,12 +37,21 @@ export const mockUsers: User[] = [
     empresaId: 'empresa-1',
     activo: true,
     photoURL: 'https://picsum.photos/seed/user2/100/100',
-    notificacionesHabilitadas: true,
-    fcmTokens: [],
+     notificaciones: {
+      habilitadas: true,
+      fcmTokens: [],
+      preferencias: {
+        alarmasCriticas: true,
+        asignacionTareas: true,
+        aprobacionesPendientes: true,
+        reportesDiarios: false,
+      }
+    },
      metadata: {
       createdAt: subDays(now, 200),
       updatedAt: subDays(now, 2),
       lastLogin: subHours(now, 5),
+      createdBy: 'user-1',
     },
   },
   {
@@ -44,12 +62,21 @@ export const mockUsers: User[] = [
     empresaId: 'empresa-1',
     activo: true,
     photoURL: 'https://picsum.photos/seed/user3/100/100',
-    notificacionesHabilitadas: true,
-    fcmTokens: [],
+    notificaciones: {
+      habilitadas: true,
+      fcmTokens: [],
+      preferencias: {
+        alarmasCriticas: true,
+        asignacionTareas: true,
+        aprobacionesPendientes: false,
+        reportesDiarios: false,
+      }
+    },
      metadata: {
       createdAt: subDays(now, 150),
       updatedAt: subDays(now, 3),
       lastLogin: subHours(now, 8),
+      createdBy: 'user-2',
     },
   },
 ];
@@ -117,6 +144,7 @@ export const mockEquipos: Equipo[] = [
     ubicacion: { planta: 'Planta Principal', sector: 'Producción' },
     estadoActual: 'operativo',
     fechaInstalacion: subDays(now, 500),
+    garantiaHasta: subDays(addMonths(now, 24), 500),
     qrCodeId: 'qr-mot-plt1-001',
     planesAsociados: ['plan-1'],
     proximoMantenimiento: { planId: 'plan-1', fechaProgramada: addDays(now, 10), tipoIntervencion: 'preventivo' },
@@ -236,6 +264,26 @@ export const mockIntervenciones: Intervencion[] = [
     requiereSegimiento: false,
     empresaId: 'empresa-1',
     metadata: { createdAt: subDays(now, 35), updatedAt: subDays(now, 35) },
+  },
+  {
+    id: 'int-4',
+    numeroIntervencion: 'INT-2024-00120',
+    equipoId: 'eq-1',
+    equipoSnapshot: { codigoInterno: 'MOT-PLT1-001', descripcion: 'Motor Principal de Línea 1', ubicacion: 'Planta Principal - Producción' },
+    tipoIntervencion: 'preventivo',
+    planMantenimientoId: 'plan-1',
+    prioridad: 'normal',
+    tecnicoId: 'user-3',
+    tecnicoSnapshot: { displayName: 'Technician Ted', email: 'tech@maintwise.com' },
+    fechaInicio: subMonths(now, 2),
+    fechaFin: subMonths(now, 2),
+    trabajoRealizado: 'Inspección mensual anterior. Todo normal.',
+    estadoEquipoDespues: 'operativo',
+    estadoCierre: 'cerrada',
+    repuestosUtilizados: [],
+    requiereSegimiento: false,
+    empresaId: 'empresa-1',
+    metadata: { createdAt: subMonths(now, 2), updatedAt: subMonths(now, 2) },
   },
 ];
 

@@ -6,8 +6,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { HardHat, Wrench, Calendar, MapPin, QrCode, Bot, FileText, ChevronRight } from 'lucide-react';
-import { capitalize, formatDate } from '@/lib/utils';
+import { HardHat, Bot, FileText, ChevronRight } from 'lucide-react';
+import { capitalize } from '@/lib/utils';
 import { QrCodeCard } from '@/components/equipment/qr-code-card';
 import { EquipmentDetailsCard } from '@/components/equipment/equipment-details-card';
 import { EquipmentInterventionsHistory } from '@/components/equipment/equipment-interventions-history';
