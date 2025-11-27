@@ -3,7 +3,7 @@ import { AlarmsTable } from "@/components/alarms/alarms-table";
 import { getAlarms } from "@/lib/mock-data";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/componentsui/table";
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 
 export const metadata: Metadata = {
   title: "Alarmas | MaintWise",
