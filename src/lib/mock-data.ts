@@ -1,5 +1,6 @@
+
 import { Alarma, Equipo, Intervencion, PlanMantenimiento, User } from '@/lib/types';
-import { subDays, addDays, subHours, subMonths, addMonths } from 'date-fns';
+import { subDays, addDays, subHours, subMonths, addMonths, startOfToday } from 'date-fns';
 
 const now = new Date();
 
@@ -57,7 +58,7 @@ export const mockUsers: User[] = [
   {
     id: 'user-3',
     email: 'tech@maintwise.com',
-    displayName: 'Technician Ted',
+    displayName: 'Juan Técnico',
     role: 'tecnico',
     empresaId: 'empresa-1',
     activo: true,
@@ -208,86 +209,105 @@ export const mockEquipos: Equipo[] = [
   },
 ];
 
+const today = startOfToday();
+
 export const mockIntervenciones: Intervencion[] = [
+  // Intervención URGENTE para hoy
   {
-    id: 'int-1',
-    numeroIntervencion: 'INT-2024-00123',
+    id: 'int-urgent-1',
+    numeroIntervencion: 'INT-2024-00501',
+    clienteSnapshot: { nombreComercial: 'Fábrica Textil La Industrial' },
+    equipoId: 'eq-1',
+    equipoSnapshot: { codigoInterno: 'MOTOR-B03', descripcion: 'Motor principal', ubicacion: 'Planta Central - Sala máq.' },
+    tipoIntervencion: 'emergencia',
+    prioridad: 'urgente',
+    tecnicoId: 'user-3',
+    tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
+    estado: 'asignada',
+    tiempos: { asignado: subHours(now, 1), programado: today },
+    empresaId: 'empresa-1',
+    metadata: { createdAt: subHours(now, 1), updatedAt: subHours(now, 1) },
+    // legacy
+    fechaInicio: subHours(now, 1),
+    trabajoRealizado: '',
+    estadoEquipoDespues: 'en_reparacion',
+    estadoCierre: 'abierta',
+    requiereSegimiento: true,
+  },
+  // Intervención PENDIENTE para hoy
+  {
+    id: 'int-pending-1',
+    numeroIntervencion: 'INT-2024-00502',
+    clienteSnapshot: { nombreComercial: 'Frigorífico Carnes del Sur' },
+    equipoId: 'eq-4',
+    equipoSnapshot: { codigoInterno: 'TABLERO-A12', descripcion: 'Mant. Preventivo', ubicacion: 'Depósito Norte' },
+    tipoIntervencion: 'preventivo',
+    prioridad: 'normal',
+    tecnicoId: 'user-3',
+    tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
+    estado: 'asignada',
+    tiempos: { asignado: subDays(now, 2), programado: addHours(today, 11) },
+    empresaId: 'empresa-1',
+    metadata: { createdAt: subDays(now, 2), updatedAt: subDays(now, 2) },
+    // legacy
+    fechaInicio: addHours(today, 11),
+    trabajoRealizado: '',
+    estadoEquipoDespues: 'en_reparacion',
+    estadoCierre: 'abierta',
+    requiereSegimiento: false,
+  },
+  // Intervención EN PROGRESO
+  {
+    id: 'int-progress-1',
+    numeroIntervencion: 'INT-2024-00503',
+    clienteSnapshot: { nombreComercial: 'Hospital Regional' },
+    equipoId: 'eq-3',
+    equipoSnapshot: { codigoInterno: 'UPS-05', descripcion: 'Inspección rutinaria', ubicacion: 'Piso 3 - Sala de servidores' },
+    tipoIntervencion: 'inspeccion',
+    prioridad: 'normal',
+    tecnicoId: 'user-3',
+    tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
+    estado: 'en_progreso',
+    tiempos: { asignado: subDays(now, 1), iniciado: subHours(now, 2), programado: subDays(now, 1) },
+    empresaId: 'empresa-1',
+    metadata: { createdAt: subDays(now, 1), updatedAt: subHours(now, 2) },
+    // legacy
+    fechaInicio: subHours(now, 2),
+    trabajoRealizado: 'Iniciada inspección...',
+    estadoEquipoDespues: 'en_mantenimiento',
+    estadoCierre: 'abierta',
+    requiereSegimiento: true,
+  },
+  // Intervención COMPLETADA hoy
+  {
+    id: 'int-completed-1',
+    numeroIntervencion: 'INT-2024-00504',
+    clienteSnapshot: { nombreComercial: 'Supermercado El Gran Ahorro' },
     equipoId: 'eq-2',
-    equipoSnapshot: { codigoInterno: 'BOM-SCT2-003', descripcion: 'Bomba de Refrigeración Torre 2', ubicacion: 'Planta Principal - Refrigeración' },
+    equipoSnapshot: { codigoInterno: 'BOMBA-D05', descripcion: 'Bomba de agua', ubicacion: 'Sala de bombas' },
     tipoIntervencion: 'correctivo',
     prioridad: 'alta',
     tecnicoId: 'user-3',
-    tecnicoSnapshot: { displayName: 'Technician Ted', email: 'tech@maintwise.com' },
-    fechaInicio: subDays(now, 1),
-    fechaFin: subDays(now, 1),
-    trabajoRealizado: 'Reemplazo de rodamientos y sello mecánico. Se realizó prueba de funcionamiento, todo OK.',
-    estadoEquipoDespues: 'operativo',
-    estadoCierre: 'cerrada',
-    repuestosUtilizados: [{ descripcion: 'Rodamiento 6205-2RS', cantidad: 2, unidad: 'un' }],
-    requiereSegimiento: false,
+    tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
+    estado: 'completada_tecnico',
+    tiempos: { 
+      asignado: subHours(today, 4), 
+      iniciado: subHours(today, 3), 
+      finalizado: subHours(today, 2),
+      duracionReal: 45
+    },
     empresaId: 'empresa-1',
-    metadata: { createdAt: subDays(now, 1), updatedAt: now },
-  },
-  {
-    id: 'int-2',
-    numeroIntervencion: 'INT-2024-00122',
-    equipoId: 'eq-1',
-    equipoSnapshot: { codigoInterno: 'MOT-PLT1-001', descripcion: 'Motor Principal de Línea 1', ubicacion: 'Planta Principal - Producción' },
-    tipoIntervencion: 'preventivo',
-    planMantenimientoId: 'plan-1',
-    prioridad: 'normal',
-    tecnicoId: 'user-3',
-    tecnicoSnapshot: { displayName: 'Technician Ted', email: 'tech@maintwise.com' },
-    fechaInicio: subDays(now, 20),
-    fechaFin: subDays(now, 20),
-    trabajoRealizado: 'Inspección mensual según plan. Limpieza y medición de corrientes.',
+    metadata: { createdAt: subHours(today, 4), updatedAt: subHours(today, 2) },
+     // legacy
+    fechaInicio: subHours(today, 3),
+    fechaFin: subHours(today, 2),
+    trabajoRealizado: 'Se reemplazó sello mecánico.',
     estadoEquipoDespues: 'operativo',
-    estadoCierre: 'cerrada',
-    repuestosUtilizados: [],
+    estadoCierre: 'pendiente_aprobacion',
     requiereSegimiento: false,
-    empresaId: 'empresa-1',
-    metadata: { createdAt: subDays(now, 20), updatedAt: subDays(now, 20) },
-  },
-  {
-    id: 'int-3',
-    numeroIntervencion: 'INT-2024-00121',
-    equipoId: 'eq-3',
-    equipoSnapshot: { codigoInterno: 'UPS-SRV-001', descripcion: 'UPS Sala de Servidores', ubicacion: 'Oficinas Centrales - Data Center'},
-    tipoIntervencion: 'inspeccion',
-    prioridad: 'baja',
-    tecnicoId: 'user-2',
-    tecnicoSnapshot: { displayName: 'Supervisor Sam', email: 'supervisor@maintwise.com' },
-    fechaInicio: subDays(now, 35),
-    fechaFin: subDays(now, 35),
-    trabajoRealizado: 'Inspección visual y chequeo de logs.',
-    estadoEquipoDespues: 'operativo',
-    estadoCierre: 'cerrada',
-    repuestosUtilizados: [],
-    requiereSegimiento: false,
-    empresaId: 'empresa-1',
-    metadata: { createdAt: subDays(now, 35), updatedAt: subDays(now, 35) },
-  },
-  {
-    id: 'int-4',
-    numeroIntervencion: 'INT-2024-00120',
-    equipoId: 'eq-1',
-    equipoSnapshot: { codigoInterno: 'MOT-PLT1-001', descripcion: 'Motor Principal de Línea 1', ubicacion: 'Planta Principal - Producción' },
-    tipoIntervencion: 'preventivo',
-    planMantenimientoId: 'plan-1',
-    prioridad: 'normal',
-    tecnicoId: 'user-3',
-    tecnicoSnapshot: { displayName: 'Technician Ted', email: 'tech@maintwise.com' },
-    fechaInicio: subMonths(now, 2),
-    fechaFin: subMonths(now, 2),
-    trabajoRealizado: 'Inspección mensual anterior. Todo normal.',
-    estadoEquipoDespues: 'operativo',
-    estadoCierre: 'cerrada',
-    repuestosUtilizados: [],
-    requiereSegimiento: false,
-    empresaId: 'empresa-1',
-    metadata: { createdAt: subMonths(now, 2), updatedAt: subMonths(now, 2) },
   },
 ];
+
 
 export const mockAlarmas: Alarma[] = [
     {

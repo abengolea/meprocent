@@ -1,4 +1,5 @@
 
+
 import type { Timestamp } from 'firebase/firestore';
 
 export interface User {
@@ -239,9 +240,14 @@ export interface PlanMantenimiento {
   };
 }
 
+export type EstadoIntervencion = | 'asignada' | 'en_progreso' | 'pausada' | 'requiere_repuesto' | 'requiere_autorizacion' | 'completada_tecnico' | 'aprobada' | 'rechazada' | 'cerrada' | 'cancelada';
+
 export interface Intervencion {
   id: string;
   numeroIntervencion: string;
+  clienteSnapshot: {
+    nombreComercial: string;
+  };
   equipoId: string;
   equipoSnapshot: {
     codigoInterno: string;
@@ -249,77 +255,72 @@ export interface Intervencion {
     ubicacion: string;
   };
   planMantenimientoId?: string;
-  tipoIntervencion: 'correctivo' | 'preventivo' | 'predictivo' | 'inspeccion' | 'instalacion';
-  prioridad: 'baja' | 'normal' | 'alta' | 'urgente';
+  tipoIntervencion: 'correctivo' | 'preventivo' | 'predictivo' | 'inspeccion' | 'instalacion' | 'emergencia';
+  prioridad: 'baja' | 'normal' | 'alta' | 'urgente' | 'emergencia';
   tecnicoId: string;
   tecnicoSnapshot: {
     displayName: string;
     email: string;
   };
-  fechaInicio: Date | Timestamp;
-  fechaFin?: Date | Timestamp;
-  duracionMinutos?: number;
-  descripcionProblema?: string;
-  trabajoRealizado: string;
-  checklistResultado?: Array<{
-    tareaId: string;
-    descripcion: string;
-    estado: 'completado' | 'pendiente' | 'no_aplica' | 'fallo';
-    observaciones?: string;
-    evidenciaFoto?: string;
-  }>;
-  repuestosUtilizados: Array<{
-    descripcion: string;
-    codigoInterno?: string;
-    cantidad: number;
-    unidad: string;
-  }>;
-  medicionesRealizadas?: Array<{
-    tipo: string;
-    valor: number;
-    unidad: string;
-    estado: 'normal' | 'fuera_rango';
-  }>;
-  fotosAdjuntas?: Array<{
-    url: string;
-    descripcion?: string;
-    timestamp: Date | Timestamp;
-  }>;
-  documentosAdjuntos?: Array<{
-    nombre: string;
-    url: string;
-    tipo: string;
-  }>;
-  estadoEquipoDespues: 'operativo' | 'fuera_de_servicio' | 'en_reparacion';
-  requiereSegimiento: boolean;
-  fechaSeguimiento?: Date | Timestamp;
-  firmaDigital?: {
-    tecnico: string;
-    cliente?: string;
-    supervisor?: string;
+  supervisorId?: string;
+  
+  estado: EstadoIntervencion;
+  
+  tiempos: {
+    asignado: Date | Timestamp;
+    programado?: Date | Timestamp;
+    iniciado?: Date | Timestamp;
+    verificacionQR?: Date | Timestamp;
+    pausas?: Array<{
+      inicioPausa: Date | Timestamp;
+      finPausa?: Date | Timestamp;
+      motivo?: string;
+    }>;
+    finalizado?: Date | Timestamp;
+    aprobado?: Date | Timestamp;
+    duracionReal?: number;
+    duracionTotal?: number;
   };
-  estadoCierre: 'abierta' | 'cerrada' | 'pendiente_aprobacion' | 'rechazada' | 'requiere_info';
-  aprobacionSupervisor?: {
+  
+  verificacion?: {
+    qrEscaneado: boolean;
+    qrCodeId?: string;
+    ubicacionGPS?: { lat: number; lng: number; };
+    confirmadoManualmente: boolean;
+  };
+  
+  datosTecnico?: {
+    problemaDetectado?: string;
+    trabajoRealizado: string;
+    mediciones?: Array<{ tipo: string; valor: number; unidad: string; }>;
+    checklist?: Array<{ tareaId: string; completado: boolean; }>;
+    repuestosUtilizados?: Array<{ descripcion: string; cantidad: number; }>;
+    fotos?: Array<{ url: string; tipo: 'antes' | 'despues' | 'problema'; }>;
+    estadoEquipoFinal: 'operativo' | 'requiere_seguimiento' | 'fuera_servicio';
+    observaciones?: string;
+    firmaCliente?: { nombre: string; firmaBase64: string; };
+  };
+
+  aprobacion?: {
+    aprobado: boolean;
     supervisorId: string;
     fecha: Date | Timestamp;
     comentarios?: string;
-    aprobado: boolean;
   };
-  costoEstimado?: {
-    manoObra: number;
-    repuestos: number;
-    total: number;
-    moneda: string;
-  };
+
   empresaId: string;
   metadata: {
     createdAt: Date | Timestamp;
     updatedAt: Date | Timestamp;
-    ubicacionGPS?: {
-      lat: number;
-      lng: number;
-    };
   };
+
+  // Legacy fields for compatibility
+  fechaInicio: Date | Timestamp;
+  fechaFin?: Date | Timestamp;
+  trabajoRealizado: string;
+  estadoEquipoDespues: 'operativo' | 'fuera_de_servicio' | 'en_reparacion';
+  estadoCierre: 'abierta' | 'cerrada' | 'pendiente_aprobacion' | 'rechazada' | 'requiere_info';
+  requiereSegimiento: boolean;
 }
 
 export interface Alarma {

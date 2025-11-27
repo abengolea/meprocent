@@ -1,32 +1,30 @@
+
 import type { Metadata } from "next";
-import { RecentAlarms } from "@/components/dashboard/recent-alarms";
-import { RecentInterventions } from "@/components/dashboard/recent-interventions";
-import { getAlarms, getIntervenciones, mockUsers } from "@/lib/mock-data";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { User } from "@/lib/types";
+import { mockUsers, getIntervenciones } from "@/lib/mock-data";
+import { User, Intervencion } from "@/lib/types";
+import { DashboardTecnico } from "@/components/tecnico/dashboard-tecnico";
 
 export const metadata: Metadata = {
     title: "Dashboard | MaintWise",
     description: "Visión general de sus tareas y alarmas.",
 };
 
-// Simulamos que el rol del usuario se obtiene de una sesión
 const userRole = 'tecnico'; 
 
 const getCurrentUser = (): User => {
     if (userRole === 'admin') return mockUsers[0];
     if (userRole === 'supervisor') return mockUsers[1];
-    return mockUsers[2]; // tecnico
+    return mockUsers.find(u => u.role === 'tecnico')!; // Aseguramos que sea un técnico
 }
 
 export default function DashboardPage() {
     const user = getCurrentUser();
 
+    // Vistas para otros roles
     if (user.role === 'admin' || user.role === 'supervisor') {
-        // Redirigir o mostrar un dashboard diferente para admin/supervisor
-        // Por ahora, mantendremos la lógica del dashboard de admin si no es técnico
         return (
              <div className="flex flex-col gap-6">
                 <header>
@@ -38,51 +36,41 @@ export default function DashboardPage() {
             </div>
         );
     }
-
+    
+    // Dashboard del Técnico
     return (
-        <div className="flex flex-col gap-6">
-            <header>
-                <h1 className="text-3xl font-bold tracking-tight">Bienvenido de nuevo, {user.displayName.split(' ')[0]}</h1>
-                <p className="text-muted-foreground">
-                    Aquí tienes un resumen de tus tareas y alarmas asignadas.
-                </p>
-            </header>
-            
-            <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                <Suspense fallback={<CardSkeleton />}>
-                    <RecentAlarmsLoader />
-                </Suspense>
-                <Suspense fallback={<CardSkeleton />}>
-                    <RecentInterventionsLoader />
-                </Suspense>
-            </div>
-        </div>
+        <Suspense fallback={<DashboardSkeleton />}>
+            <DashboardTecnicoLoader user={user} />
+        </Suspense>
     );
 }
 
-async function RecentAlarmsLoader() {
-    const alarmas = await getAlarms();
-    // En una app real, filtraríamos las alarmas asignadas a este técnico
-    return <RecentAlarms alarms={alarmas} />;
+async function DashboardTecnicoLoader({ user }: { user: User }) {
+    // En una app real, aquí se filtrarían las intervenciones por `user.id` y fecha.
+    const intervenciones = await getIntervenciones(); 
+    return <DashboardTecnico user={user} intervenciones={intervenciones} />;
 }
 
-async function RecentInterventionsLoader() {
-    const intervenciones = await getIntervenciones();
-    // En una app real, filtraríamos las intervenciones asignadas a este técnico
-    return <RecentInterventions intervenciones={intervenciones} />;
-}
-
-const CardSkeleton = () => (
-    <Card>
-        <CardHeader>
-            <CardTitle><Skeleton className="h-6 w-48" /></CardTitle>
-        </CardHeader>
-        <CardContent>
-            <div className="space-y-4">
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-                <Skeleton className="h-12 w-full" />
-            </div>
-        </CardContent>
-    </Card>
+const DashboardSkeleton = () => (
+    <div className="space-y-6">
+        <div className="space-y-2">
+            <Skeleton className="h-8 w-48" />
+            <Skeleton className="h-4 w-64" />
+        </div>
+        <Card>
+            <CardHeader>
+                <Skeleton className="h-6 w-40" />
+            </CardHeader>
+            <CardContent className="flex justify-around">
+                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
+                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
+                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
+            </CardContent>
+        </Card>
+        <Skeleton className="h-20 w-full" />
+        <div className="space-y-4">
+             <Skeleton className="h-6 w-48" />
+             <Skeleton className="h-24 w-full" />
+        </div>
+    </div>
 );
