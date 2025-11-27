@@ -4,6 +4,7 @@ import { getIntervenciones } from "@/lib/mock-data";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Intervencion } from "@/lib/types";
 
 
 export const metadata: Metadata = {
@@ -11,7 +12,13 @@ export const metadata: Metadata = {
   description: "Historial de intervenciones de mantenimiento.",
 };
 
-export default function InterventionsPage() {
+type InterventionsPageProps = {
+  searchParams?: {
+    status?: Intervencion['estadoCierre'];
+  };
+};
+
+export default function InterventionsPage({ searchParams }: InterventionsPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -21,14 +28,17 @@ export default function InterventionsPage() {
         </p>
       </div>
       <Suspense fallback={<InterventionsTableSkeleton />}>
-        <InterventionsLoader />
+        <InterventionsLoader status={searchParams?.status} />
       </Suspense>
     </div>
   );
 }
 
-async function InterventionsLoader() {
-    const intervenciones = await getIntervenciones();
+async function InterventionsLoader({ status }: { status?: Intervencion['estadoCierre'] }) {
+    let intervenciones = await getIntervenciones();
+    if (status) {
+        intervenciones = intervenciones.filter(i => i.estadoCierre === status);
+    }
     return <InterventionsTable intervenciones={intervenciones} />;
 }
 

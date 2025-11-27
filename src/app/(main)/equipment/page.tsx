@@ -7,13 +7,20 @@ import { getEquipos } from '@/lib/mock-data';
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Equipo } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Equipos | MaintWise",
   description: "Gestión de inventario de equipos.",
 };
 
-export default function EquipmentPage() {
+type EquipmentPageProps = {
+  searchParams?: {
+    status?: Equipo['estadoActual'];
+  };
+};
+
+export default function EquipmentPage({ searchParams }: EquipmentPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -32,14 +39,17 @@ export default function EquipmentPage() {
       </div>
 
       <Suspense fallback={<EquipmentTableSkeleton />}>
-        <EquipmentLoader />
+        <EquipmentLoader status={searchParams?.status} />
       </Suspense>
     </div>
   );
 }
 
-async function EquipmentLoader() {
-    const equipos = await getEquipos();
+async function EquipmentLoader({ status }: { status?: Equipo['estadoActual'] }) {
+    let equipos = await getEquipos();
+    if (status) {
+        equipos = equipos.filter(e => e.estadoActual === status);
+    }
     return <EquipmentTable equipos={equipos} />;
 }
 

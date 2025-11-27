@@ -23,7 +23,7 @@ export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps
             icon: HardHat,
             value: operativos,
             description: `de ${equipos.length} equipos totales`,
-            href: "/equipment",
+            href: "/equipment?status=operativo",
             textColor: ""
         },
         {
@@ -31,7 +31,7 @@ export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps
             icon: Siren,
             value: alarmasActivas,
             description: "Requieren atención",
-            href: "/alarms",
+            href: "/alarms?status=activas",
             textColor: ""
         },
         {
@@ -39,7 +39,7 @@ export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps
             icon: Wrench,
             value: intervencionesPendientes,
             description: "Trabajos en curso o por iniciar",
-            href: "/interventions",
+            href: "/interventions?status=abierta",
             textColor: ""
         },
         {
@@ -47,7 +47,7 @@ export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps
             icon: AlertTriangle,
             value: mantenimientosVencidos,
             description: "Planes de mantenimiento atrasados",
-            href: "/alarms",
+            href: "/alarms?type=mantenimiento_vencido",
             textColor: "text-destructive"
         }
     ]

@@ -4,13 +4,21 @@ import { getAlarms } from "@/lib/mock-data";
 import { Suspense } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
+import { Alarma } from "@/lib/types";
 
 export const metadata: Metadata = {
   title: "Alarmas | MaintWise",
   description: "Gestión de alarmas y notificaciones.",
 };
 
-export default function AlarmsPage() {
+type AlarmsPageProps = {
+  searchParams?: {
+    status?: 'activas' | Alarma['estado'];
+    type?: Alarma['tipoAlarma'];
+  };
+};
+
+export default function AlarmsPage({ searchParams }: AlarmsPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
@@ -21,14 +29,22 @@ export default function AlarmsPage() {
       </div>
 
       <Suspense fallback={<AlarmsTableSkeleton />}>
-        <AlarmsLoader />
+        <AlarmsLoader status={searchParams?.status} type={searchParams?.type} />
       </Suspense>
     </div>
   );
 }
 
-async function AlarmsLoader() {
-    const alarmas = await getAlarms();
+async function AlarmsLoader({ status, type }: { status?: 'activas' | Alarma['estado'], type?: Alarma['tipoAlarma'] }) {
+    let alarmas = await getAlarms();
+    if (status === 'activas') {
+        alarmas = alarmas.filter(a => a.estado === 'pendiente' || a.estado === 'en_progreso');
+    } else if (status) {
+        alarmas = alarmas.filter(a => a.estado === status);
+    }
+    if (type) {
+        alarmas = alarmas.filter(a => a.tipoAlarma === type);
+    }
     return <AlarmsTable alarmas={alarmas} />;
 }
 
