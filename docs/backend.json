@@ -1,0 +1,194 @@
+{
+  "entities": {
+    "User": {
+      "title": "User",
+      "description": "Represents a user of the application with a specific role and permissions.",
+      "type": "object",
+      "properties": {
+        "id": { "type": "string" },
+        "email": { "type": "string", "format": "email" },
+        "displayName": { "type": "string" },
+        "role": { "type": "string", "enum": ["super_admin", "admin", "supervisor", "tecnico_senior", "tecnico"] },
+        "empresaId": { "type": "string" },
+        "activo": { "type": "boolean" },
+        "photoURL": { "type": "string", "format": "uri" },
+        "telefono": { "type": "string" },
+        "perfilTecnico": {
+          "type": "object",
+          "properties": {
+            "especialidades": { "type": "array", "items": { "type": "string" } },
+            "turno": { "type": "string", "enum": ["mañana", "tarde", "noche", "rotativo"] },
+            "zonasAsignadas": { "type": "array", "items": { "type": "string" } },
+            "nivelExperiencia": { "type": "string", "enum": ["junior", "intermedio", "senior"] },
+            "certificaciones": { "type": "array", "items": { "type": "string" } },
+            "disponibilidadEmergencias": { "type": "boolean" }
+          }
+        },
+        "perfilSupervisor": {
+          "type": "object",
+          "properties": {
+            "equiposSupervisa": { "type": "array", "items": { "type": "string" } },
+            "tecnicosACargo": { "type": "array", "items": { "type": "string" } },
+            "sectoresResponsable": { "type": "array", "items": { "type": "string" } }
+          }
+        },
+        "notificaciones": {
+            "type": "object",
+            "properties": {
+                "habilitadas": { "type": "boolean" },
+                "fcmTokens": { "type": "array", "items": { "type": "string" } },
+                "preferencias": {
+                    "type": "object",
+                    "properties": {
+                        "alarmasCriticas": { "type": "boolean" },
+                        "asignacionTareas": { "type": "boolean" },
+                        "aprobacionesPendientes": { "type": "boolean" },
+                        "reportesDiarios": { "type": "boolean" },
+                        "horaReporteDiario": { "type": "string" }
+                    }
+                }
+            }
+        },
+        "metadata": {
+            "type": "object",
+            "properties": {
+                "createdAt": { "type": "string", "format": "date-time" },
+                "updatedAt": { "type": "string", "format": "date-time" },
+                "lastLogin": { "type": "string", "format": "date-time" },
+                "createdBy": { "type": "string" }
+            }
+        }
+      },
+      "required": ["id", "email", "displayName", "role", "empresaId", "activo"]
+    },
+    "Empresa": {
+        "title": "Empresa",
+        "description": "Represents a company using the service.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "razonSocial": { "type": "string" },
+            "nombreComercial": { "type": "string" },
+            "cuit": { "type": "string" },
+            "activa": { "type": "boolean" },
+            "metadata": {
+                "type": "object",
+                "properties": {
+                    "createdAt": { "type": "string", "format": "date-time" },
+                    "updatedAt": { "type": "string", "format": "date-time" },
+                    "createdBy": { "type": "string" }
+                }
+            }
+        },
+        "required": ["id", "razonSocial", "activa"]
+    },
+    "Equipo": {
+        "title": "Equipo",
+        "description": "Represents a piece of equipment to be maintained.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "codigoInterno": { "type": "string" },
+            "descripcion": { "type": "string" },
+            "tipoEquipo": { "type": "string", "enum": ["tablero_electrico", "motor", "bomba", "ups", "transformador", "otro"] },
+            "estadoActual": { "type": "string", "enum": ["operativo", "fuera_de_servicio", "en_reparacion", "en_mantenimiento"] },
+            "empresaId": { "type": "string" },
+            "qrCodeId": { "type": "string" }
+        },
+        "required": ["id", "codigoInterno", "descripcion", "tipoEquipo", "estadoActual", "empresaId", "qrCodeId"]
+    },
+    "PlanMantenimiento": {
+        "title": "PlanMantenimiento",
+        "description": "Defines a preventive maintenance plan.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "nombrePlan": { "type": "string" },
+            "descripcion": { "type": "string" },
+            "activo": { "type": "boolean" },
+            "empresaId": { "type": "string" }
+        },
+        "required": ["id", "nombrePlan", "activo", "empresaId"]
+    },
+    "Intervencion": {
+        "title": "Intervencion",
+        "description": "Represents a maintenance intervention on a piece of equipment.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "numeroIntervencion": { "type": "string" },
+            "equipoId": { "type": "string" },
+            "tecnicoId": { "type": "string" },
+            "tipoIntervencion": { "type": "string", "enum": ["correctivo", "preventivo", "predictivo", "inspeccion", "instalacion"] },
+            "estadoCierre": { "type": "string", "enum": ["abierta", "cerrada", "pendiente_aprobacion", "rechazada", "requiere_info"] },
+            "empresaId": { "type": "string" }
+        },
+        "required": ["id", "numeroIntervencion", "equipoId", "tecnicoId", "tipoIntervencion", "estadoCierre", "empresaId"]
+    },
+    "Alarma": {
+        "title": "Alarma",
+        "description": "Represents an alarm or notification.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "numeroAlarma": { "type": "string" },
+            "equipoId": { "type": "string" },
+            "tipoAlarma": { "type": "string", "enum": ["proximo_mantenimiento", "mantenimiento_vencido", "equipo_fuera_servicio", "fallo_detectado", "umbral_excedido", "inspeccion_requerida"] },
+            "severidad": { "type": "string", "enum": ["baja", "media", "alta", "critica"] },
+            "estado": { "type": "string", "enum": ["pendiente", "en_progreso", "resuelta", "cancelada", "escalada"] },
+            "generadoPor": { "type": "string", "enum": ["sistema", "supervisor", "tecnico", "sensor"] },
+            "empresaId": { "type": "string" }
+        },
+        "required": ["id", "numeroAlarma", "equipoId", "tipoAlarma", "severidad", "estado", "generadoPor", "empresaId"]
+    },
+    "AsignacionTarea": {
+        "title": "AsignacionTarea",
+        "description": "Represents a task assignment to a technician.",
+        "type": "object",
+        "properties": {
+            "id": { "type": "string" },
+            "tipo": { "type": "string", "enum": ["intervencion_programada", "alarma", "emergencia"] },
+            "equipoId": { "type": "string" },
+            "tecnicoAsignadoId": { "type": "string" },
+            "supervisorId": { "type": "string" },
+            "prioridad": { "type": "string", "enum": ["baja", "normal", "alta", "urgente"] },
+            "estado": { "type": "string", "enum": ["pendiente", "aceptada", "en_progreso", "completada", "rechazada"] },
+            "empresaId": { "type": "string" }
+        },
+        "required": ["id", "tipo", "equipoId", "tecnicoAsignadoId", "supervisorId", "prioridad", "estado", "empresaId"]
+    }
+  },
+  "auth": {
+    "providers": ["email"]
+  },
+  "firestore": {
+    "/users/{userId}": {
+      "schema": { "$ref": "#/entities/User" },
+      "description": "Stores user profile information."
+    },
+    "/empresas/{empresaId}": {
+        "schema": { "$ref": "#/entities/Empresa" },
+        "description": "Stores company information."
+    },
+    "/equipos/{equipoId}": {
+        "schema": { "$ref": "#/entities/Equipo" },
+        "description": "Stores equipment data."
+    },
+    "/planesMantenimiento/{planId}": {
+        "schema": { "$ref": "#/entities/PlanMantenimiento" },
+        "description": "Stores maintenance plans."
+    },
+    "/intervenciones/{intervencionId}": {
+        "schema": { "$ref": "#/entities/Intervencion" },
+        "description": "Stores maintenance intervention records."
+    },
+    "/alarmas/{alarmaId}": {
+        "schema": { "$ref": "#/entities/Alarma" },
+        "description": "Stores alarm and notification data."
+    },
+    "/asignacionesTareas/{asignacionId}": {
+        "schema": { "$ref": "#/entities/AsignacionTarea" },
+        "description": "Stores task assignments for technicians."
+    }
+  }
+}
