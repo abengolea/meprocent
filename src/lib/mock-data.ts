@@ -1,6 +1,6 @@
 
 import { Alarma, Equipo, Intervencion, PlanMantenimiento, User } from '@/lib/types';
-import { subDays, addDays, subHours, subMonths, addMonths, startOfToday } from 'date-fns';
+import { subDays, addDays, subHours, subMonths, addMonths, startOfToday, addHours } from 'date-fns';
 
 const now = new Date();
 
