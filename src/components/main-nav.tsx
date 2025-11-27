@@ -10,6 +10,9 @@ import {
   ClipboardList,
   QrCode,
   Mountain,
+  Users,
+  Settings,
+  BarChart,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -29,10 +32,13 @@ import {
 
 const navItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
+  { href: '/users', label: 'Usuarios', icon: Users },
   { href: '/equipment', label: 'Equipos', icon: HardHat },
   { href: '/interventions', label: 'Intervenciones', icon: Wrench },
   { href: '/alarms', label: 'Alarmas', icon: Siren },
-  { href: '/plans', label: 'Planes', icon: ClipboardList },
+  { href: '/plans', label: 'Planes Mtto.', icon: ClipboardList },
+  { href: '/reports', label: 'Reportes', icon: BarChart },
+  { href: '/settings', label: 'Configuración', icon: Settings },
 ];
 
 export function MainNav() {

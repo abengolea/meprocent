@@ -2,20 +2,30 @@
 
 import Link from "next/link";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
-import { HardHat, Siren, Wrench, AlertTriangle } from "lucide-react";
-import type { Alarma, Equipo, Intervencion } from "@/lib/types";
+import { HardHat, Siren, Wrench, Users } from "lucide-react";
+import type { Alarma, Equipo, Intervencion, User } from "@/lib/types";
+import { isWithinInterval, startOfMonth } from "date-fns";
 
 interface StatsCardsProps {
     equipos: Equipo[];
     alarmas: Alarma[];
     intervenciones: Intervencion[];
+    usuarios: User[];
 }
 
-export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps) {
+export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: StatsCardsProps) {
     const operativos = equipos.filter(e => e.estadoActual === 'operativo').length;
+    
+    const now = new Date();
+    const startOfCurrentMonth = startOfMonth(now);
+    const intervencionesMes = intervenciones.filter(i => 
+        isWithinInterval(new Date(i.fechaInicio as Date), { start: startOfCurrentMonth, end: now })
+    ).length;
+
     const alarmasActivas = alarmas.filter(a => a.estado === 'pendiente' || a.estado === 'en_progreso').length;
-    const intervencionesPendientes = intervenciones.filter(i => i.estadoCierre === 'abierta').length;
-    const mantenimientosVencidos = alarmas.filter(a => a.tipoAlarma === 'mantenimiento_vencido' && a.estado !== 'resuelta').length;
+    
+    const tecnicos = usuarios.filter(u => u.role === 'tecnico' || u.role === 'tecnico_senior');
+    const tecnicosActivos = tecnicos.filter(u => u.activo).length;
 
     const cardItems = [
         {
@@ -27,28 +37,28 @@ export function StatsCards({ equipos, alarmas, intervenciones }: StatsCardsProps
             textColor: ""
         },
         {
+            title: "Intervenciones (Mes)",
+            icon: Wrench,
+            value: intervencionesMes,
+            description: `desde el ${startOfCurrentMonth.toLocaleDateString()}`,
+            href: "/interventions",
+            textColor: ""
+        },
+        {
             title: "Alarmas Activas",
             icon: Siren,
             value: alarmasActivas,
-            description: "Requieren atención",
+            description: "Requieren atención inmediata",
             href: "/alarms?status=activas",
-            textColor: ""
+            textColor: alarmasActivas > 0 ? "text-destructive" : ""
         },
         {
-            title: "Intervenciones Pendientes",
-            icon: Wrench,
-            value: intervencionesPendientes,
-            description: "Trabajos en curso o por iniciar",
-            href: "/interventions?status=abierta",
+            title: "Técnicos Activos",
+            icon: Users,
+            value: `${tecnicosActivos}/${tecnicos.length}`,
+            description: "Usuarios con rol de técnico",
+            href: "/users?role=tecnico",
             textColor: ""
-        },
-        {
-            title: "Mantenimientos Vencidos",
-            icon: AlertTriangle,
-            value: mantenimientosVencidos,
-            description: "Planes de mantenimiento atrasados",
-            href: "/alarms?type=mantenimiento_vencido",
-            textColor: "text-destructive"
         }
     ]
 
