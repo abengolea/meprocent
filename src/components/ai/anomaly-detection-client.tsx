@@ -44,10 +44,12 @@ export function AnomalyDetectionClient({ equipment }: { equipment: Equipo }) {
     setParsedFailures([]);
 
     try {
-      const result = await runAnalysis(equipment.id, equipment);
+      // For development, we'll use a mock result to avoid constant API calls
+      // In production, you would use the actual `runAnalysis` function.
+      // const result = await runAnalysis(equipment.id, equipment);
       
-      // Simulate Genkit response with mock data if needed for UI development
-      const mockResult: AnalyzeEquipmentDataOutput = {
+      await new Promise(resolve => setTimeout(resolve, 2000)); // Simulate network delay
+      const result: AnalyzeEquipmentDataOutput = {
           predictedFailures: JSON.stringify([
               { componente: "Rodamientos del motor", tipo_falla: "Desgaste acelerado", causa_probable: "Vibraciones anómalas detectadas en el último período", criticidad: "Alta" },
               { componente: "Bobinado", tipo_falla: "Sobrecalentamiento", causa_probable: "Picos de temperatura registrados", criticidad: "Media" }
@@ -56,10 +58,10 @@ export function AnomalyDetectionClient({ equipment }: { equipment: Equipo }) {
           confidenceLevel: 0.85
       }
 
-      setAnalysisResult(mockResult);
+      setAnalysisResult(result);
 
       try {
-        const failures = JSON.parse(mockResult.predictedFailures);
+        const failures = JSON.parse(result.predictedFailures);
         setParsedFailures(Array.isArray(failures) ? failures : []);
       } catch (e) {
         console.error("Failed to parse predicted failures:", e);
