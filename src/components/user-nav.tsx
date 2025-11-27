@@ -17,8 +17,8 @@ import { mockUsers } from '@/lib/mock-data';
 import Link from 'next/link';
 
 export function UserNav() {
-  // Mocking a logged-in user
-  const user = mockUsers[1];
+  // Mocking a logged-in user. Changed to technician.
+  const user = mockUsers[2];
 
   return (
     <DropdownMenu>
@@ -44,10 +44,6 @@ export function UserNav() {
           <DropdownMenuItem>
             <User className="mr-2 h-4 w-4" />
             <span>Perfil</span>
-          </DropdownMenuItem>
-          <DropdownMenuItem>
-            <CreditCard className="mr-2 h-4 w-4" />
-            <span>Facturación</span>
           </DropdownMenuItem>
           <DropdownMenuItem>
             <Settings className="mr-2 h-4 w-4" />

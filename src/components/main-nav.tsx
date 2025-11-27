@@ -30,19 +30,24 @@ import {
   DialogTrigger,
 } from "@/components/ui/dialog"
 
-const navItems = [
-  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { href: '/users', label: 'Usuarios', icon: Users },
-  { href: '/equipment', label: 'Equipos', icon: HardHat },
-  { href: '/interventions', label: 'Intervenciones', icon: Wrench },
-  { href: '/alarms', label: 'Alarmas', icon: Siren },
-  { href: '/plans', label: 'Planes Mtto.', icon: ClipboardList },
-  { href: '/reports', label: 'Reportes', icon: BarChart },
-  { href: '/settings', label: 'Configuración', icon: Settings },
+// Simulamos que el rol del usuario se obtiene de una sesión
+const userRole = 'tecnico'; // Cambiar a 'admin' o 'supervisor' para ver otras vistas
+
+const allNavItems = [
+  { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/users', label: 'Usuarios', icon: Users, roles: ['admin', 'supervisor'] },
+  { href: '/equipment', label: 'Equipos', icon: HardHat, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/interventions', label: 'Intervenciones', icon: Wrench, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/alarms', label: 'Alarmas', icon: Siren, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/plans', label: 'Planes Mtto.', icon: ClipboardList, roles: ['admin', 'supervisor'] },
+  { href: '/reports', label: 'Reportes', icon: BarChart, roles: ['admin', 'supervisor'] },
+  { href: '/settings', label: 'Configuración', icon: Settings, roles: ['admin'] },
 ];
 
 export function MainNav() {
   const pathname = usePathname();
+
+  const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
   return (
     <nav className="flex flex-col h-full">
