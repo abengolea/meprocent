@@ -5,6 +5,7 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { HardHat, Siren, Wrench, Users } from "lucide-react";
 import type { Alarma, Equipo, Intervencion, User } from "@/lib/types";
 import { isWithinInterval, startOfMonth } from "date-fns";
+import { formatDate } from "@/lib/utils";
 
 interface StatsCardsProps {
     equipos: Equipo[];
@@ -40,7 +41,7 @@ export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: Stats
             title: "Intervenciones (Mes)",
             icon: Wrench,
             value: intervencionesMes,
-            description: `desde el ${startOfCurrentMonth.toLocaleDateString()}`,
+            description: `desde el ${formatDate(startOfCurrentMonth, 'dd/MM/yyyy')}`,
             href: "/interventions",
             textColor: ""
         },
