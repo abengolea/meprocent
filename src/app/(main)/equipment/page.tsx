@@ -63,7 +63,8 @@ const EquipmentTableSkeleton = () => (
                     <TableHead>Tipo</TableHead>
                     <TableHead>Ubicación</TableHead>
                     <TableHead>Estado</TableHead>
-                    <TableHead className="w-[100px] text-right">Acciones</TableHead>
+                    <TableHead>Próx. Mant.</TableHead>
+                    <TableHead className="w-[50px] text-right"></TableHead>
                 </TableRow>
             </TableHeader>
             <TableBody>
@@ -74,6 +75,7 @@ const EquipmentTableSkeleton = () => (
                         <TableCell><Skeleton className="h-4 w-20" /></TableCell>
                         <TableCell><Skeleton className="h-4 w-32" /></TableCell>
                         <TableCell><Skeleton className="h-6 w-28" /></TableCell>
+                        <TableCell><Skeleton className="h-4 w-24" /></TableCell>
                         <TableCell className="text-right"><Skeleton className="h-8 w-8 inline-block" /></TableCell>
                     </TableRow>
                 ))}
