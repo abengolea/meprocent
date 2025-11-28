@@ -30,7 +30,7 @@ import { useState } from "react";
 import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
-import { Textarea } from "../ui/textarea";
+import type { Equipo } from "@/lib/types";
 
 const equipmentFormSchema = z.object({
   codigoInterno: z.string().min(3, "El código debe tener al menos 3 caracteres."),
@@ -49,6 +49,10 @@ const equipmentFormSchema = z.object({
 
 type EquipmentFormValues = z.infer<typeof equipmentFormSchema>;
 
+interface EquipmentFormProps {
+  equipo?: Equipo;
+}
+
 const tiposDeEquipo = [
     { value: 'motor', label: 'Motor' },
     { value: 'bomba', label: 'Bomba' },
@@ -58,38 +62,54 @@ const tiposDeEquipo = [
     { value: 'otro', label: 'Otro' },
 ]
 
-export function EquipmentForm() {
+export function EquipmentForm({ equipo }: EquipmentFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = useState(false);
+  const isEditMode = !!equipo;
+
+  const defaultValues = isEditMode ? {
+    ...equipo,
+    planta: equipo.ubicacion.planta,
+    sector: equipo.ubicacion.sector,
+    fechaInstalacion: equipo.fechaInstalacion ? new Date(equipo.fechaInstalacion as string) : undefined,
+    garantiaHasta: equipo.garantiaHasta ? new Date(equipo.garantiaHasta as string) : undefined,
+  } : {
+      codigoInterno: "",
+      descripcion: "",
+      planta: "Planta Principal",
+  };
 
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(equipmentFormSchema),
-    defaultValues: {
-      codigoInterno: "",
-      descripcion: "",
-      planta: "Planta Principal", // Default value
-    },
+    defaultValues,
   });
 
   async function onSubmit(data: EquipmentFormValues) {
     setLoading(true);
     
-    // Generar el qrCodeId automáticamente
-    const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
-    const newData = { ...data, qrCodeId };
+    if (isEditMode) {
+      console.log("Datos del equipo a actualizar:", { ...equipo, ...data });
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: "Equipo Actualizado",
+        description: `El equipo ${data.descripcion} ha sido actualizado.`,
+      });
+      router.push(`/equipment/${equipo.id}`);
+      router.refresh(); // Forzar la actualización de la página de detalles
+    } else {
+      const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
+      const newData = { ...data, qrCodeId };
 
-    console.log("Datos del nuevo equipo:", newData);
+      console.log("Datos del nuevo equipo:", newData);
+      await new Promise(resolve => setTimeout(resolve, 1500));
+      toast({
+        title: "Equipo Creado",
+        description: `El equipo ${data.descripcion} ha sido agregado al inventario.`,
+      });
+      router.push("/equipment");
+    }
     
-    // Simular llamada a la API
-    await new Promise(resolve => setTimeout(resolve, 1500));
-
-    toast({
-      title: "Equipo Creado",
-      description: `El equipo ${data.descripcion} ha sido agregado al inventario.`,
-    });
-
-    router.push("/equipment");
     setLoading(false);
   }
 
@@ -104,7 +124,7 @@ export function EquipmentForm() {
                     <FormItem>
                     <FormLabel>Código Interno</FormLabel>
                     <FormControl>
-                        <Input placeholder="Ej: MOT-001" {...field} disabled={loading} />
+                        <Input placeholder="Ej: MOT-001" {...field} disabled={loading || isEditMode} />
                     </FormControl>
                     <FormDescription>Identificador único del equipo.</FormDescription>
                     <FormMessage />
@@ -255,6 +275,47 @@ export function EquipmentForm() {
                     </FormItem>
                 )}
             />
+             <FormField
+                control={form.control}
+                name="garantiaHasta"
+                render={({ field }) => (
+                    <FormItem className="flex flex-col">
+                        <FormLabel>Garantía hasta (Opcional)</FormLabel>
+                        <Popover>
+                            <PopoverTrigger asChild>
+                                <FormControl>
+                                    <Button
+                                    variant={"outline"}
+                                    className={cn(
+                                        "w-[240px] pl-3 text-left font-normal",
+                                        !field.value && "text-muted-foreground"
+                                    )}
+                                    >
+                                    {field.value ? (
+                                        formatDate(field.value, 'PPP')
+                                    ) : (
+                                        <span>Seleccionar fecha</span>
+                                    )}
+                                    <CalendarIcon className="ml-auto h-4 w-4 opacity-50" />
+                                    </Button>
+                                </FormControl>
+                            </PopoverTrigger>
+                            <PopoverContent className="w-auto p-0" align="start">
+                                <Calendar
+                                    mode="single"
+                                    selected={field.value}
+                                    onSelect={field.onChange}
+                                    disabled={(date) =>
+                                     date < new Date("1900-01-01")
+                                    }
+                                    initialFocus
+                                />
+                            </PopoverContent>
+                        </Popover>
+                        <FormMessage />
+                    </FormItem>
+                )}
+            />
 
         </div>
 
@@ -264,7 +325,7 @@ export function EquipmentForm() {
             </Button>
             <Button type="submit" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loading ? "Guardando..." : "Agregar Equipo"}
+                {loading ? "Guardando..." : (isEditMode ? "Guardar Cambios" : "Agregar Equipo")}
             </Button>
         </div>
       </form>

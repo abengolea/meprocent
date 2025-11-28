@@ -6,7 +6,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { HardHat, Bot, FileText, ChevronRight } from 'lucide-react';
+import { HardHat, Bot, FileText, ChevronRight, Pencil } from 'lucide-react';
 import { capitalize } from '@/lib/utils';
 import { QrCodeCard } from '@/components/equipment/qr-code-card';
 import { EquipmentDetailsCard } from '@/components/equipment/equipment-details-card';
@@ -67,6 +67,12 @@ export default async function EquipmentDetailPage({ params }: Props) {
             <Badge variant={getStatusVariant(equipo.estadoActual)} className="text-sm">
                 {capitalize(equipo.estadoActual.replace(/_/g, ' '))}
             </Badge>
+            <Button asChild variant="outline" size="sm">
+              <Link href={`/equipment/${equipo.id}/edit`}>
+                <Pencil className="mr-2 h-4 w-4" />
+                Editar
+              </Link>
+            </Button>
         </div>
       </div>
       

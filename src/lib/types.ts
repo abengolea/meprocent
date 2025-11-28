@@ -162,8 +162,8 @@ export interface Equipo {
     };
   };
   estadoActual: 'operativo' | 'fuera_de_servicio' | 'en_reparacion' | 'en_mantenimiento';
-  fechaInstalacion?: Date | Timestamp;
-  garantiaHasta?: Date | Timestamp;
+  fechaInstalacion?: Date | Timestamp | string;
+  garantiaHasta?: Date | Timestamp | string;
   qrCodeId: string;
   qrCodeURL?: string;
   caracteristicasTecnicas?: {
