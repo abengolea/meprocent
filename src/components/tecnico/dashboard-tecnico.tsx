@@ -200,7 +200,11 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
                                     Iniciar
                                 </Link>
                             </Button>
-                            <Button variant="outline" className="flex-1">Ver Detalles</Button>
+                            <Button variant="outline" className="flex-1" asChild>
+                                <Link href={`/equipment/${trabajo.equipoId}`}>
+                                    Ver Detalles
+                                </Link>
+                            </Button>
                         </div>
                     )}
                 </div>
