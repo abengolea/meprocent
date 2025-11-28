@@ -1,6 +1,6 @@
 'use client';
 
-import { getAlarmById } from '@/lib/mock-data';
+import { getAlarmById, mockUsers } from '@/lib/mock-data';
 import { notFound, useRouter } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 import type { Metadata } from 'next';
@@ -10,8 +10,19 @@ import { Button } from '@/components/ui/button';
 import { AlertTriangle, HardHat, FileText, Calendar, Shield, Activity, User, MessageSquare, Loader2 } from 'lucide-react';
 import { capitalize, formatDate } from '@/lib/utils';
 import Link from 'next/link';
-import { Alarma } from '@/lib/types';
+import { Alarma, User as UserType } from '@/lib/types';
 import { useToast } from '@/hooks/use-toast';
+import {
+    Dialog,
+    DialogContent,
+    DialogDescription,
+    DialogFooter,
+    DialogHeader,
+    DialogTitle,
+    DialogTrigger,
+} from "@/components/ui/dialog";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
+import { Label } from "@/components/ui/label";
 
 
 type Props = {
@@ -26,6 +37,10 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
     const router = useRouter();
     const { toast } = useToast();
     const [loading, setLoading] = useState<string | null>(null);
+    const [dialogOpen, setDialogOpen] = useState(false);
+    const [selectedTechnicianId, setSelectedTechnicianId] = useState<string | undefined>();
+
+    const technicians = mockUsers.filter(u => u.role === 'tecnico' || u.role === 'tecnico_senior');
 
     const handleCreateIntervention = () => {
         setLoading('intervention');
@@ -34,13 +49,25 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
     };
 
     const handleAssign = () => {
+        if (!selectedTechnicianId) {
+            toast({
+                variant: "destructive",
+                title: 'Error',
+                description: 'Por favor, seleccione un técnico.',
+            });
+            return;
+        }
         setLoading('assign');
         setTimeout(() => {
+            const technician = technicians.find(t => t.id === selectedTechnicianId);
             toast({
                 title: 'Alarma Asignada',
-                description: `La alarma ha sido asignada a un técnico (simulado).`,
+                description: `La alarma ha sido asignada a ${technician?.displayName}.`,
             });
             setLoading(null);
+            setDialogOpen(false);
+            setSelectedTechnicianId(undefined);
+            // Here you would update the alarm in the database
         }, 1000);
     };
 
@@ -70,10 +97,45 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
                     {loading === 'intervention' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Crear Intervención
                 </Button>
-                <Button variant="secondary" className="w-full" onClick={handleAssign} disabled={!!loading}>
-                    {loading === 'assign' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
-                    Asignar a Técnico
-                </Button>
+                
+                <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+                    <DialogTrigger asChild>
+                        <Button variant="secondary" className="w-full" disabled={!!loading}>
+                            Asignar a Técnico
+                        </Button>
+                    </DialogTrigger>
+                    <DialogContent>
+                        <DialogHeader>
+                            <DialogTitle>Asignar Alarma a Técnico</DialogTitle>
+                            <DialogDescription>
+                                Seleccione el técnico que se hará cargo de esta alarma.
+                            </DialogDescription>
+                        </DialogHeader>
+                        <RadioGroup 
+                            value={selectedTechnicianId} 
+                            onValueChange={setSelectedTechnicianId}
+                            className="space-y-2 my-4"
+                        >
+                            {technicians.map(tech => (
+                                <div key={tech.id} className="flex items-center space-x-2">
+                                    <RadioGroupItem value={tech.id} id={`tech-${tech.id}`} />
+                                    <Label htmlFor={`tech-${tech.id}`} className="flex-1 cursor-pointer">{tech.displayName}</Label>
+                                    <Badge variant="outline">{capitalize(tech.role.replace('tecnico_', ''))}</Badge>
+                                </div>
+                            ))}
+                        </RadioGroup>
+                        <DialogFooter>
+                            <Button variant="outline" onClick={() => setDialogOpen(false)} disabled={!!loading}>
+                                Cancelar
+                            </Button>
+                            <Button onClick={handleAssign} disabled={!selectedTechnicianId || !!loading}>
+                                {loading === 'assign' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                                Confirmar Asignación
+                            </Button>
+                        </DialogFooter>
+                    </DialogContent>
+                </Dialog>
+
                 <Button variant="outline" className="w-full" onClick={handleResolve} disabled={!!loading}>
                     {loading === 'resolve' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
                     Marcar como Resuelta
@@ -216,9 +278,13 @@ export default function AlarmDetailPage({ params }: Props) {
 
         </div>
         <div className="space-y-6">
-            <AlarmActions alarma={alarma} />
+            <Suspense fallback={<div>Cargando acciones...</div>}>
+              <AlarmActions alarma={alarma} />
+            </Suspense>
         </div>
       </div>
     </div>
   );
 }
+
+    
