@@ -30,7 +30,7 @@ const nextConfig: NextConfig = {
       },
     ],
   },
-  // Forcing a server restart to clear HMR issues.
+  // Forcing a server restart to clear HMR issues. This is a simple trick to fix module resolution problems.
 };
 
 export default nextConfig;
