@@ -37,7 +37,7 @@ export function QrCodeCard({ equipo }: QrCodeCardProps) {
         const url = `${window.location.origin}/equipment/${equipo.id}`;
         setQrValue(url);
     }, [equipo.id]);
-
+    
     const handlePrint = useReactToPrint({
         content: () => printRef.current,
         documentTitle: `QR-Code-${equipo.codigoInterno}`,
