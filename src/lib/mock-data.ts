@@ -1,4 +1,5 @@
 
+
 import { Alarma, Equipo, Intervencion, PlanMantenimiento, User } from '@/lib/types';
 import { subDays, addDays, subHours, subMonths, addMonths, startOfToday, addHours } from 'date-fns';
 
@@ -218,10 +219,10 @@ export const mockIntervenciones: Intervencion[] = [
     numeroIntervencion: 'INT-2024-00501',
     clienteSnapshot: { nombreComercial: 'Fábrica Textil La Industrial' },
     equipoId: 'eq-1',
-    equipoSnapshot: { codigoInterno: 'MOTOR-B03', descripcion: 'Motor principal', ubicacion: 'Planta Central - Sala máq.' },
+    equipoSnapshot: { codigoInterno: 'MOT-PLT1-001', descripcion: 'Temperatura alta', ubicacion: 'Planta Central - Sala máq.' },
     tipoIntervencion: 'emergencia',
     prioridad: 'urgente',
-    tecnicoId: 'user-3',
+    tecnicoId: 'user-3', // Asignado a Juan Técnico
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
     estado: 'asignada',
     tiempos: { asignado: subHours(now, 1), programado: today },
@@ -240,10 +241,10 @@ export const mockIntervenciones: Intervencion[] = [
     numeroIntervencion: 'INT-2024-00502',
     clienteSnapshot: { nombreComercial: 'Frigorífico Carnes del Sur' },
     equipoId: 'eq-4',
-    equipoSnapshot: { codigoInterno: 'TABLERO-A12', descripcion: 'Mant. Preventivo', ubicacion: 'Depósito Norte' },
+    equipoSnapshot: { codigoInterno: 'TBL-TALLER-01', descripcion: 'Mant. Preventivo', ubicacion: 'Depósito Norte' },
     tipoIntervencion: 'preventivo',
     prioridad: 'normal',
-    tecnicoId: 'user-3',
+    tecnicoId: 'user-3', // Asignado a Juan Técnico
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
     estado: 'asignada',
     tiempos: { asignado: subDays(now, 2), programado: addHours(today, 11) },
@@ -262,10 +263,10 @@ export const mockIntervenciones: Intervencion[] = [
     numeroIntervencion: 'INT-2024-00503',
     clienteSnapshot: { nombreComercial: 'Hospital Regional' },
     equipoId: 'eq-3',
-    equipoSnapshot: { codigoInterno: 'UPS-05', descripcion: 'Inspección rutinaria', ubicacion: 'Piso 3 - Sala de servidores' },
+    equipoSnapshot: { codigoInterno: 'UPS-SRV-001', descripcion: 'Inspección rutinaria', ubicacion: 'Piso 3 - Sala de servidores' },
     tipoIntervencion: 'inspeccion',
     prioridad: 'normal',
-    tecnicoId: 'user-3',
+    tecnicoId: 'user-3', // Asignado a Juan Técnico
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
     estado: 'en_progreso',
     tiempos: { asignado: subDays(now, 1), iniciado: subHours(now, 2), programado: subDays(now, 1) },
@@ -284,10 +285,10 @@ export const mockIntervenciones: Intervencion[] = [
     numeroIntervencion: 'INT-2024-00504',
     clienteSnapshot: { nombreComercial: 'Supermercado El Gran Ahorro' },
     equipoId: 'eq-2',
-    equipoSnapshot: { codigoInterno: 'BOMBA-D05', descripcion: 'Bomba de agua', ubicacion: 'Sala de bombas' },
+    equipoSnapshot: { codigoInterno: 'BOM-SCT2-003', descripcion: 'Bomba de agua', ubicacion: 'Sala de bombas' },
     tipoIntervencion: 'correctivo',
     prioridad: 'alta',
-    tecnicoId: 'user-3',
+    tecnicoId: 'user-3', // Asignado a Juan Técnico
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
     estado: 'completada_tecnico',
     tiempos: { 

@@ -60,7 +60,7 @@ export default function FormularioTrabajoPage() {
             setLoading(true);
             const todasIntervenciones = await getIntervenciones();
             // Simulación: Buscamos la intervención por ID. En una app real, sería una query directa.
-            const interv = todasIntervenciones.find(i => i.id === 'int-1'); // Forzamos una para el demo
+            const interv = todasIntervenciones.find(i => i.id === 'int-progress-1'); // Forzamos una para el demo
             if (interv) {
                 setIntervencion(interv);
                 const fetchedEquipo = await getEquipoById(interv.equipoId);

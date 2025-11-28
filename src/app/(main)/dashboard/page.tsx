@@ -1,4 +1,5 @@
 
+
 import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
@@ -46,7 +47,6 @@ export default function DashboardPage() {
 }
 
 async function DashboardTecnicoLoader({ user }: { user: User }) {
-    // En una app real, aquí se filtrarían las intervenciones por `user.id` y fecha.
     const intervenciones = await getIntervenciones(); 
     return <DashboardTecnico user={user} intervenciones={intervenciones} />;
 }

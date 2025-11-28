@@ -186,14 +186,16 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
 
                 <div className="mt-4">
                     {enProgreso ? (
-                         <Button className="w-full" variant="secondary">
-                            <Wrench className="mr-2 h-4 w-4"/>
-                            Continuar Trabajo
+                         <Button className="w-full" variant="secondary" asChild>
+                            <Link href={`/tecnico/trabajo/${trabajo.id}/formulario`}>
+                                <Wrench className="mr-2 h-4 w-4"/>
+                                Continuar Trabajo
+                            </Link>
                         </Button>
                     ) : (
                         <div className="flex gap-2">
                              <Button className="flex-1" variant={esUrgente ? "destructive" : "default"} asChild>
-                                <Link href={`/tecnico/trabajo/${trabajo.id}/verificar`}>
+                                <Link href={`/tecnico/trabajo/${trabajo.equipoId}/verificar`}>
                                     <Play className="mr-2 h-4 w-4"/>
                                     Iniciar
                                 </Link>
@@ -206,4 +208,3 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
         </Card>
     );
 }
-
