@@ -8,12 +8,18 @@ import type { Equipo } from "@/lib/types";
 import { ChevronRight } from "lucide-react";
 import Link from "next/link";
 import { Card, CardContent } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 
 interface EquipmentTableProps {
     equipos: Equipo[];
 }
 
 export function EquipmentTable({ equipos }: EquipmentTableProps) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
     
     const getStatusVariant = (status: Equipo['estadoActual']) => {
         switch (status) {
@@ -21,6 +27,10 @@ export function EquipmentTable({ equipos }: EquipmentTableProps) {
             case 'fuera_de_servicio': return 'destructive';
             default: return 'secondary';
         }
+    }
+    
+    if (!isClient) {
+        return null; // O un esqueleto de carga si lo prefieres
     }
 
     if (!equipos.length) {

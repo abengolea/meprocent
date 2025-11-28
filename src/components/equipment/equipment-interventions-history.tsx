@@ -6,14 +6,25 @@ import { capitalize, formatDate } from "@/lib/utils";
 import { Intervencion } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
+import React, { useState, useEffect } from "react";
 
 interface EquipmentInterventionsHistoryProps {
     intervenciones: Intervencion[];
 }
 
 export function EquipmentInterventionsHistory({ intervenciones }: EquipmentInterventionsHistoryProps) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+    
     const sortedInterventions = intervenciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
     
+    if (!isClient) {
+        return null;
+    }
+
     return (
         <Card>
             <CardHeader>

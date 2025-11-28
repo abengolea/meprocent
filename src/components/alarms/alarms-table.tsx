@@ -5,12 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { capitalize, formatDate } from "@/lib/utils";
 import type { Alarma } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 
 interface AlarmsTableProps {
     alarmas: Alarma[];
 }
 
 export function AlarmsTable({ alarmas }: AlarmsTableProps) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const sortedAlarms = alarmas.sort((a, b) => new Date(b.fechaGeneracion).getTime() - new Date(a.fechaGeneracion).getTime());
 
     const getSeverityVariant = (severity: Alarma['severidad']) => {
@@ -30,6 +37,10 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
             case 'resuelta': return 'outline';
             default: return 'secondary';
         }
+    }
+    
+    if (!isClient) {
+        return null;
     }
 
     if (!alarmas.length) {

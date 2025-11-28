@@ -5,12 +5,19 @@ import { Badge } from "@/components/ui/badge";
 import { capitalize, formatDate } from "@/lib/utils";
 import type { Intervencion } from "@/lib/types";
 import { Card } from "@/components/ui/card";
+import React, { useState, useEffect } from "react";
 
 interface InterventionsTableProps {
     intervenciones: Intervencion[];
 }
 
 export function InterventionsTable({ intervenciones }: InterventionsTableProps) {
+    const [isClient, setIsClient] = useState(false);
+
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
+
     const sortedInterventions = intervenciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
 
     const getStatusVariant = (status: Intervencion['estadoCierre']) => {
@@ -20,6 +27,10 @@ export function InterventionsTable({ intervenciones }: InterventionsTableProps) 
             case 'pendiente_aprobacion': return 'secondary';
             default: return 'secondary';
         }
+    }
+    
+    if (!isClient) {
+        return null;
     }
 
     if (!intervenciones.length) {
