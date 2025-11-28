@@ -31,6 +31,7 @@ import { CalendarIcon, Loader2 } from "lucide-react";
 import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import type { Equipo } from "@/lib/types";
+import { Separator } from "../ui/separator";
 
 const equipmentFormSchema = z.object({
   codigoInterno: z.string().min(3, "El código debe tener al menos 3 caracteres."),
@@ -45,6 +46,10 @@ const equipmentFormSchema = z.object({
   sector: z.string().min(1, "El sector es requerido."),
   fechaInstalacion: z.date().optional(),
   garantiaHasta: z.date().optional(),
+  // Características técnicas opcionales
+  potencia: z.string().optional(),
+  voltaje: z.string().optional(),
+  corriente: z.string().optional(),
 });
 
 type EquipmentFormValues = z.infer<typeof equipmentFormSchema>;
@@ -74,22 +79,35 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
     sector: equipo.ubicacion.sector,
     fechaInstalacion: equipo.fechaInstalacion ? new Date(equipo.fechaInstalacion as string) : undefined,
     garantiaHasta: equipo.garantiaHasta ? new Date(equipo.garantiaHasta as string) : undefined,
+    potencia: equipo.caracteristicasTecnicas?.potencia || "",
+    voltaje: equipo.caracteristicasTecnicas?.voltaje || "",
+    corriente: equipo.caracteristicasTecnicas?.corriente || "",
   } : {
       codigoInterno: "",
       descripcion: "",
       planta: "Planta Principal",
+      potencia: "",
+      voltaje: "",
+      corriente: "",
   };
 
   const form = useForm<EquipmentFormValues>({
     resolver: zodResolver(equipmentFormSchema),
+    // @ts-ignore
     defaultValues,
   });
 
   async function onSubmit(data: EquipmentFormValues) {
     setLoading(true);
     
+    // Agrupar características técnicas
+    const { potencia, voltaje, corriente, ...restOfData } = data;
+    const caracteristicasTecnicas = { potencia, voltaje, corriente };
+    
+    const finalData = { ...restOfData, caracteristicasTecnicas };
+
     if (isEditMode) {
-      console.log("Datos del equipo a actualizar:", { ...equipo, ...data });
+      console.log("Datos del equipo a actualizar:", { ...equipo, ...finalData });
       await new Promise(resolve => setTimeout(resolve, 1500));
       toast({
         title: "Equipo Actualizado",
@@ -99,7 +117,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
       router.refresh(); // Forzar la actualización de la página de detalles
     } else {
       const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
-      const newData = { ...data, qrCodeId };
+      const newData = { ...finalData, qrCodeId };
 
       console.log("Datos del nuevo equipo:", newData);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -318,6 +336,58 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
             />
 
         </div>
+        
+        <Separator />
+        
+        <div>
+            <h3 className="text-lg font-medium">Características Técnicas</h3>
+            <p className="text-sm text-muted-foreground">
+                Especifique los detalles técnicos del equipo (opcional).
+            </p>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FormField
+                    control={form.control}
+                    name="potencia"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Potencia</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ej: 5.5 kW" {...field} disabled={loading}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            <FormField
+                    control={form.control}
+                    name="voltaje"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Voltaje</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ej: 380V" {...field} disabled={loading}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+            <FormField
+                    control={form.control}
+                    name="corriente"
+                    render={({ field }) => (
+                        <FormItem>
+                        <FormLabel>Corriente</FormLabel>
+                        <FormControl>
+                            <Input placeholder="Ej: 11.5A" {...field} disabled={loading}/>
+                        </FormControl>
+                        <FormMessage />
+                        </FormItem>
+                    )}
+                />
+        </div>
+
 
         <div className="flex justify-end gap-2">
             <Button type="button" variant="outline" onClick={() => router.back()} disabled={loading}>
