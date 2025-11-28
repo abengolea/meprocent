@@ -74,7 +74,12 @@ export function EquipmentForm() {
 
   async function onSubmit(data: EquipmentFormValues) {
     setLoading(true);
-    console.log("Datos del nuevo equipo:", data);
+    
+    // Generar el qrCodeId automáticamente
+    const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
+    const newData = { ...data, qrCodeId };
+
+    console.log("Datos del nuevo equipo:", newData);
     
     // Simular llamada a la API
     await new Promise(resolve => setTimeout(resolve, 1500));
