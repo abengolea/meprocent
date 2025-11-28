@@ -1,3 +1,4 @@
+
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -6,12 +7,14 @@ import { capitalize, formatDate } from "@/lib/utils";
 import type { Alarma } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import React, { useState, useEffect } from "react";
+import { useRouter } from 'next/navigation';
 
 interface AlarmsTableProps {
     alarmas: Alarma[];
 }
 
 export function AlarmsTable({ alarmas }: AlarmsTableProps) {
+    const router = useRouter();
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -38,6 +41,12 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
             default: return 'secondary';
         }
     }
+
+    const handleRowClick = (alarmId: string) => {
+        // En un futuro, esto navegará a la página de detalle de la alarma
+        // router.push(`/alarms/${alarmId}`);
+        console.log(`Navegando a la alarma: ${alarmId}`);
+    };
     
     if (!isClient) {
         return null;
@@ -69,7 +78,11 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
                 </TableHeader>
                 <TableBody>
                     {sortedAlarms.map((alarma) => (
-                        <TableRow key={alarma.id}>
+                        <TableRow 
+                            key={alarma.id}
+                            onClick={() => handleRowClick(alarma.id)}
+                            className="cursor-pointer"
+                        >
                             <TableCell className="font-medium">{alarma.numeroAlarma}</TableCell>
                             <TableCell>{alarma.titulo}</TableCell>
                             <TableCell>{alarma.equipoSnapshot.descripcion}</TableCell>
