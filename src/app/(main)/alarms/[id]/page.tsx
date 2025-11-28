@@ -87,23 +87,30 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
 export default function AlarmDetailPage({ params }: Props) {
   const [alarma, setAlarma] = useState<Alarma | null>(null);
   const [loading, setLoading] = useState(true);
+  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    const fetchAlarm = async () => {
-        setLoading(true);
-        const fetchedAlarm = await getAlarmById(params.id);
-        if (fetchedAlarm) {
-            setAlarma(fetchedAlarm);
-        } else {
-            notFound();
-        }
-        setLoading(false);
-    };
-    fetchAlarm();
-  }, [params.id]);
+    setIsClient(true);
+  }, []);
+
+  useEffect(() => {
+    if (isClient) {
+      const fetchAlarm = async () => {
+          setLoading(true);
+          const fetchedAlarm = await getAlarmById(params.id);
+          if (fetchedAlarm) {
+              setAlarma(fetchedAlarm);
+          } else {
+              notFound();
+          }
+          setLoading(false);
+      };
+      fetchAlarm();
+    }
+  }, [params.id, isClient]);
 
 
-  if (loading || !alarma) {
+  if (!isClient || loading || !alarma) {
     return <div className="p-6">Cargando detalles de la alarma...</div>;
   }
   
