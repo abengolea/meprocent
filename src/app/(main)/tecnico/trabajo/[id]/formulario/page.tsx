@@ -9,6 +9,7 @@ import { useEffect, useState, useRef } from 'react';
 
 import { getEquipoById, getIntervenciones, getPlanes } from '@/lib/mock-data';
 import type { Equipo, Intervencion, PlanMantenimiento } from '@/lib/types';
+import { generateWorkReport } from "@/ai/flows/generate-work-report-flow";
 
 import { Button } from "@/components/ui/button";
 import { Card, CardContent } from "@/components/ui/card";
@@ -19,7 +20,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Timer, Pause, Camera, FilePlus, ChevronLeft, Mic, Sparkles } from 'lucide-react';
+import { Timer, Pause, Camera, FilePlus, ChevronLeft, Mic, Sparkles, Loader2 } from 'lucide-react';
 
 const formSchema = z.object({
     problemaDetectado: z.string().optional(),
@@ -29,7 +30,7 @@ const formSchema = z.object({
 });
 
 // --- Componente para control de voz ---
-const VoiceInputControl = ({ field, onTranscript }: { field: any, onTranscript: (text: string) => void }) => {
+const VoiceInputControl = ({ onTranscript }: { onTranscript: (text: string) => void }) => {
     const [isListening, setIsListening] = useState(false);
     const recognitionRef = useRef<any>(null);
     const { toast } = useToast();
@@ -65,8 +66,13 @@ const VoiceInputControl = ({ field, onTranscript }: { field: any, onTranscript: 
         if (isListening) {
             recognitionRef.current.stop();
         } else {
-            recognitionRef.current.start();
-            setIsListening(true);
+            try {
+                recognitionRef.current.start();
+                setIsListening(true);
+            } catch (error) {
+                console.error("Could not start speech recognition:", error);
+                toast({ variant: "destructive", title: "Error de Voz", description: "No se pudo iniciar el dictado. Asegúrate de tener los permisos de micrófono activados." });
+            }
         }
     };
     
@@ -94,6 +100,7 @@ export default function FormularioTrabajoPage() {
     const [equipo, setEquipo] = useState<Equipo | null>(null);
     const [plan, setPlan] = useState<PlanMantenimiento | null>(null);
     const [loading, setLoading] = useState(true);
+    const [isAiLoading, setIsAiLoading] = useState<"problemaDetectado" | "trabajoRealizado" | "observaciones" | null>(null);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
@@ -105,12 +112,39 @@ export default function FormularioTrabajoPage() {
         },
     });
     
-    const handleAiAssist = (fieldName: "problemaDetectado" | "trabajoRealizado") => {
-        const currentValue = form.getValues(fieldName);
-        toast({
-            title: "Asistente IA (En Desarrollo)",
-            description: "Próximamente podrás generar texto con IA. Contenido actual: " + currentValue,
-        });
+    const handleAiAssist = async (fieldName: "problemaDetectado" | "trabajoRealizado" | "observaciones") => {
+        const keywords = form.getValues(fieldName);
+        if (!keywords || keywords.trim().length < 5) {
+            toast({
+                variant: "destructive",
+                title: "Texto insuficiente",
+                description: "Por favor, escribe algunas palabras clave para que la IA pueda ayudarte.",
+            });
+            return;
+        }
+
+        setIsAiLoading(fieldName);
+        try {
+            const result = await generateWorkReport({
+                keywords,
+                fieldType: fieldName,
+                equipment: equipo!,
+            });
+            form.setValue(fieldName, result.generatedText);
+            toast({
+                title: "Texto generado con IA",
+                description: "El informe ha sido mejorado.",
+            });
+        } catch (error) {
+            console.error("AI report generation failed:", error);
+            toast({
+                variant: "destructive",
+                title: "Error de IA",
+                description: "No se pudo generar el texto. Inténtalo de nuevo.",
+            });
+        } finally {
+            setIsAiLoading(null);
+        }
     };
 
     useEffect(() => {
@@ -183,9 +217,9 @@ export default function FormularioTrabajoPage() {
                                     <Textarea placeholder="Describe el problema o usa el micrófono para dictar..." {...field} className="pr-20" />
                                 </FormControl>
                                 <div className="absolute top-1 right-1 flex">
-                                    <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
-                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("problemaDetectado")}>
-                                        <Sparkles className="h-4 w-4" />
+                                    <VoiceInputControl onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("problemaDetectado")} disabled={isAiLoading !== null}>
+                                        {isAiLoading === "problemaDetectado" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>
@@ -205,9 +239,9 @@ export default function FormularioTrabajoPage() {
                                     <Textarea placeholder="Detalla los pasos o usa el micrófono para dictar..." rows={5} {...field} className="pr-20"/>
                                 </FormControl>
                                  <div className="absolute top-1 right-1 flex">
-                                    <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
-                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("trabajoRealizado")}>
-                                        <Sparkles className="h-4 w-4" />
+                                    <VoiceInputControl onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("trabajoRealizado")} disabled={isAiLoading !== null}>
+                                        {isAiLoading === "trabajoRealizado" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>
@@ -252,9 +286,9 @@ export default function FormularioTrabajoPage() {
                                     <Textarea placeholder="Recomendaciones, notas, etc." {...field} className="pr-20"/>
                                 </FormControl>
                                 <div className="absolute top-1 right-1 flex">
-                                     <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
-                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("observaciones" as any)}>
-                                        <Sparkles className="h-4 w-4" />
+                                     <VoiceInputControl onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("observaciones")} disabled={isAiLoading !== null}>
+                                        {isAiLoading === "observaciones" ? <Loader2 className="h-4 w-4 animate-spin" /> : <Sparkles className="h-4 w-4" />}
                                     </Button>
                                 </div>
                             </div>
@@ -290,3 +324,5 @@ export default function FormularioTrabajoPage() {
         </FormProvider>
     );
 }
+
+    
