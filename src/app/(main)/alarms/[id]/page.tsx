@@ -1,39 +1,110 @@
+'use client';
+
 import { getAlarmById } from '@/lib/mock-data';
-import { notFound } from 'next/navigation';
-import { Suspense } from 'react';
+import { notFound, useRouter } from 'next/navigation';
+import { Suspense, useState, useEffect } from 'react';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Badge } from '@/components/ui/badge';
-import { Separator } from '@/components/ui/separator';
 import { Button } from '@/components/ui/button';
-import { AlertTriangle, HardHat, FileText, Calendar, Shield, Activity, User, MessageSquare } from 'lucide-react';
+import { AlertTriangle, HardHat, FileText, Calendar, Shield, Activity, User, MessageSquare, Loader2 } from 'lucide-react';
 import { capitalize, formatDate } from '@/lib/utils';
 import Link from 'next/link';
+import { Alarma } from '@/lib/types';
+import { useToast } from '@/hooks/use-toast';
+
 
 type Props = {
   params: { id: string };
 };
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const alarma = await getAlarmById(params.id);
+// Metadata generation should be a separate export if we use 'use client' at the top level.
+// However, since we are fetching data inside the component now, we can't generate static metadata easily.
+// For this prototype, we'll remove generateMetadata for simplicity as we make the page dynamic.
 
-  if (!alarma) {
-    return {
-      title: 'Alarma no encontrada',
+function AlarmActions({ alarma }: { alarma: Alarma }) {
+    const router = useRouter();
+    const { toast } = useToast();
+    const [loading, setLoading] = useState<string | null>(null);
+
+    const handleCreateIntervention = () => {
+        setLoading('intervention');
+        // In a real app, you might create a preliminary intervention record here.
+        router.push(`/interventions/new?alarmId=${alarma.id}&equipoId=${alarma.equipoId}`);
     };
-  }
 
-  return {
-    title: `Alarma: ${alarma.numeroAlarma} | MaintWise`,
-    description: `Detalles de la alarma ${alarma.titulo}.`,
-  };
+    const handleAssign = () => {
+        setLoading('assign');
+        setTimeout(() => {
+            toast({
+                title: 'Alarma Asignada',
+                description: `La alarma ha sido asignada a un técnico (simulado).`,
+            });
+            setLoading(null);
+        }, 1000);
+    };
+
+    const handleResolve = () => {
+        setLoading('resolve');
+        setTimeout(() => {
+            toast({
+                title: 'Alarma Resuelta',
+                description: 'La alarma ha sido marcada como resuelta.',
+            });
+            // Here you would also update the alarm state in the database
+            setLoading(null);
+            router.refresh(); // Refresh data on the page
+        }, 1000);
+    };
+
+    return (
+        <Card>
+            <CardHeader>
+                <CardTitle className="flex items-center gap-2">
+                    <Activity className="w-5 h-5" />
+                    Acciones Rápidas
+                </CardTitle>
+            </CardHeader>
+            <CardContent className="space-y-2">
+                <Button className="w-full" onClick={handleCreateIntervention} disabled={!!loading}>
+                    {loading === 'intervention' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Crear Intervención
+                </Button>
+                <Button variant="secondary" className="w-full" onClick={handleAssign} disabled={!!loading}>
+                    {loading === 'assign' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Asignar a Técnico
+                </Button>
+                <Button variant="outline" className="w-full" onClick={handleResolve} disabled={!!loading}>
+                    {loading === 'resolve' ? <Loader2 className="mr-2 h-4 w-4 animate-spin" /> : null}
+                    Marcar como Resuelta
+                </Button>
+            </CardContent>
+        </Card>
+    );
 }
 
-export default async function AlarmDetailPage({ params }: Props) {
-  const alarma = await getAlarmById(params.id);
 
-  if (!alarma) {
-    notFound();
+export default function AlarmDetailPage({ params }: Props) {
+  const [alarma, setAlarma] = useState<Alarma | null>(null);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    const fetchAlarm = async () => {
+        setLoading(true);
+        const fetchedAlarm = await getAlarmById(params.id);
+        if (fetchedAlarm) {
+            setAlarma(fetchedAlarm);
+        } else {
+            notFound();
+        }
+        setLoading(false);
+    };
+    fetchAlarm();
+  }, [params.id]);
+
+
+  if (loading || !alarma) {
+    return <div className="p-6">Cargando detalles de la alarma...</div>;
   }
   
   const getSeverityVariant = (severity: string) => {
@@ -138,19 +209,7 @@ export default async function AlarmDetailPage({ params }: Props) {
 
         </div>
         <div className="space-y-6">
-          <Card>
-            <CardHeader>
-              <CardTitle className="flex items-center gap-2">
-                <Activity className="w-5 h-5"/>
-                Acciones Rápidas
-              </CardTitle>
-            </CardHeader>
-            <CardContent className="space-y-2">
-              <Button className="w-full">Crear Intervención</Button>
-              <Button variant="secondary" className="w-full">Asignar a Técnico</Button>
-              <Button variant="outline" className="w-full">Marcar como Resuelta</Button>
-            </CardContent>
-          </Card>
+            <AlarmActions alarma={alarma} />
         </div>
       </div>
     </div>
