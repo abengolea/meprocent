@@ -1,3 +1,4 @@
+
 'use client';
 
 import { getAlarmById, mockUsers } from '@/lib/mock-data';
@@ -149,14 +150,10 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
 export default function AlarmDetailPage({ params }: Props) {
   const [alarma, setAlarma] = useState<Alarma | null>(null);
   const [loading, setLoading] = useState(true);
-  const [isClient, setIsClient] = useState(false);
 
   useEffect(() => {
-    setIsClient(true);
-  }, []);
-
-  useEffect(() => {
-    if (isClient) {
+    // params.id is available on the client-side inside useEffect
+    if (params.id) {
       const fetchAlarm = async () => {
           setLoading(true);
           const fetchedAlarm = await getAlarmById(params.id);
@@ -169,10 +166,10 @@ export default function AlarmDetailPage({ params }: Props) {
       };
       fetchAlarm();
     }
-  }, [params.id, isClient]);
+  }, [params.id]);
 
 
-  if (!isClient || loading || !alarma) {
+  if (loading || !alarma) {
     return <div className="p-6">Cargando detalles de la alarma...</div>;
   }
   
@@ -286,5 +283,3 @@ export default function AlarmDetailPage({ params }: Props) {
     </div>
   );
 }
-
-    
