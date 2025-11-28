@@ -5,39 +5,89 @@ import { useParams, useRouter } from "next/navigation";
 import { useForm, FormProvider } from "react-hook-form";
 import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useRef } from 'react';
 
 import { getEquipoById, getIntervenciones, getPlanes } from '@/lib/mock-data';
 import type { Equipo, Intervencion, PlanMantenimiento } from '@/lib/types';
 
 import { Button } from "@/components/ui/button";
-import { Separator } from "@/components/ui/separator";
-import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
-import { Input } from "@/components/ui/input";
 import { Checkbox } from "@/components/ui/checkbox";
 import { useToast } from "@/hooks/use-toast";
 import { Skeleton } from "@/components/ui/skeleton";
 
-import { Timer, Pause, Camera, HardHat, FilePlus, ChevronLeft } from 'lucide-react';
+import { Timer, Pause, Camera, FilePlus, ChevronLeft, Mic, Sparkles } from 'lucide-react';
 
 const formSchema = z.object({
     problemaDetectado: z.string().optional(),
     trabajoRealizado: z.string().min(10, "El reporte de trabajo es muy corto."),
     estadoEquipoFinal: z.enum(['operativo', 'requiere_seguimiento', 'fuera_servicio']),
     observaciones: z.string().optional(),
-    // Campos complejos que manejaremos por separado
-    // mediciones, checklist, repuestos, fotos, firma
 });
+
+// --- Componente para control de voz ---
+const VoiceInputControl = ({ field, onTranscript }: { field: any, onTranscript: (text: string) => void }) => {
+    const [isListening, setIsListening] = useState(false);
+    const recognitionRef = useRef<any>(null);
+    const { toast } = useToast();
+
+    useEffect(() => {
+        // @ts-ignore
+        const SpeechRecognition = window.SpeechRecognition || window.webkitSpeechRecognition;
+        if (SpeechRecognition) {
+            recognitionRef.current = new SpeechRecognition();
+            recognitionRef.current.continuous = false;
+            recognitionRef.current.lang = 'es-ES';
+            recognitionRef.current.onresult = (event: any) => {
+                const transcript = event.results[0][0].transcript;
+                onTranscript(transcript);
+                setIsListening(false);
+            };
+            recognitionRef.current.onerror = (event: any) => {
+                console.error("Speech recognition error", event.error);
+                 toast({ variant: "destructive", title: "Error de Voz", description: `No se pudo iniciar el reconocimiento: ${event.error}` });
+                setIsListening(false);
+            };
+            recognitionRef.current.onend = () => {
+                setIsListening(false);
+            };
+        }
+    }, [toast, onTranscript]);
+
+    const handleToggleListening = () => {
+        if (!recognitionRef.current) {
+            toast({ variant: "destructive", title: "No Soportado", description: "El reconocimiento de voz no está disponible en este navegador." });
+            return;
+        }
+        if (isListening) {
+            recognitionRef.current.stop();
+        } else {
+            recognitionRef.current.start();
+            setIsListening(true);
+        }
+    };
+    
+    return (
+        <Button
+            type="button"
+            variant="ghost"
+            size="icon"
+            onClick={handleToggleListening}
+            className={isListening ? 'text-red-500 animate-pulse' : ''}
+        >
+            <Mic className="h-4 w-4" />
+        </Button>
+    );
+};
+
 
 export default function FormularioTrabajoPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
-
-    // El ID aquí es de la intervención, no del equipo
     const intervencionId = Array.isArray(params.id) ? params.id[0] : params.id;
 
     const [intervencion, setIntervencion] = useState<Intervencion | null>(null);
@@ -54,13 +104,20 @@ export default function FormularioTrabajoPage() {
             observaciones: ""
         },
     });
+    
+    const handleAiAssist = (fieldName: "problemaDetectado" | "trabajoRealizado") => {
+        const currentValue = form.getValues(fieldName);
+        toast({
+            title: "Asistente IA (En Desarrollo)",
+            description: "Próximamente podrás generar texto con IA. Contenido actual: " + currentValue,
+        });
+    };
 
     useEffect(() => {
         const fetchData = async () => {
             setLoading(true);
             const todasIntervenciones = await getIntervenciones();
-            // Simulación: Buscamos la intervención por ID. En una app real, sería una query directa.
-            const interv = todasIntervenciones.find(i => i.id === 'int-progress-1'); // Forzamos una para el demo
+            const interv = todasIntervenciones.find(i => i.id === 'int-progress-1');
             if (interv) {
                 setIntervencion(interv);
                 const fetchedEquipo = await getEquipoById(interv.equipoId);
@@ -83,7 +140,6 @@ export default function FormularioTrabajoPage() {
     };
     
     const handleFinalizar = () => {
-        // Lógica de finalización
         toast({ title: "Trabajo Finalizado", description: "Enviado a aprobación del supervisor." });
         router.push("/dashboard");
     }
@@ -106,7 +162,6 @@ export default function FormularioTrabajoPage() {
                     </div>
                 </header>
 
-                {/* Cronómetro y Estado */}
                 <Card className="bg-primary text-primary-foreground">
                     <CardContent className="pt-6 flex items-center justify-between">
                          <div className="flex items-center gap-2">
@@ -117,15 +172,24 @@ export default function FormularioTrabajoPage() {
                     </CardContent>
                 </Card>
 
-                {/* Formulario Principal */}
                 <FormField
                     control={form.control}
                     name="problemaDetectado"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="text-base font-semibold">🔍 Problema Detectado</FormLabel>
-                        <FormControl><Textarea placeholder="Describe el problema que encontraste..." {...field} /></FormControl>
-                        <FormMessage />
+                            <FormLabel className="text-base font-semibold">🔍 Problema Detectado</FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                    <Textarea placeholder="Describe el problema o usa el micrófono para dictar..." {...field} className="pr-20" />
+                                </FormControl>
+                                <div className="absolute top-1 right-1 flex">
+                                    <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                    <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("problemaDetectado")}>
+                                        <Sparkles className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -134,19 +198,28 @@ export default function FormularioTrabajoPage() {
                     control={form.control}
                     name="trabajoRealizado"
                     render={({ field }) => (
-                        <FormItem>
-                        <FormLabel className="text-base font-semibold">🔧 Trabajo Realizado</FormLabel>
-                        <FormControl><Textarea placeholder="Detalla los pasos que seguiste..." rows={5} {...field} /></FormControl>
-                        <FormMessage />
+                         <FormItem>
+                            <FormLabel className="text-base font-semibold">🔧 Trabajo Realizado</FormLabel>
+                            <div className="relative">
+                                <FormControl>
+                                    <Textarea placeholder="Detalla los pasos o usa el micrófono para dictar..." rows={5} {...field} className="pr-20"/>
+                                </FormControl>
+                                 <div className="absolute top-1 right-1 flex">
+                                    <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("trabajoRealizado")}>
+                                        <Sparkles className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
 
-                {/* Checklist (si hay plan) */}
                 {plan?.checklistTareas && (
                     <Card>
-                        <CardHeader><CardTitle>✅ Checklist</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
+                        <CardContent className="pt-6 space-y-4">
+                             <h3 className="text-base font-semibold">✅ Checklist</h3>
                             {plan.checklistTareas.map(tarea => (
                                 <div key={tarea.id} className="flex items-center space-x-2">
                                     <Checkbox id={`tarea-${tarea.id}`} />
@@ -158,14 +231,13 @@ export default function FormularioTrabajoPage() {
                         </CardContent>
                     </Card>
                 )}
-
-                {/* Repuestos, Mediciones y Fotos */}
+                
                 <Card>
-                    <CardHeader><CardTitle>🔩 Repuestos, Mediciones y Fotos</CardTitle></CardHeader>
-                    <CardContent className="space-y-4">
-                        <Button variant="outline" className="w-full" type="button"><FilePlus className="mr-2 h-4 w-4"/>Agregar Repuesto</Button>
-                        <Button variant="outline" className="w-full" type="button"><FilePlus className="mr-2 h-4 w-4"/>Agregar Medición</Button>
-                        <Button variant="outline" className="w-full" type="button"><Camera className="mr-2 h-4 w-4"/>Adjuntar Foto</Button>
+                    <CardContent className="pt-6 space-y-4">
+                         <h3 className="text-base font-semibold">🔩 Repuestos, Mediciones y Fotos</h3>
+                        <Button variant="outline" className="w-full justify-start" type="button"><FilePlus className="mr-2 h-4 w-4"/>Agregar Repuesto</Button>
+                        <Button variant="outline" className="w-full justify-start" type="button"><FilePlus className="mr-2 h-4 w-4"/>Agregar Medición</Button>
+                        <Button variant="outline" className="w-full justify-start" type="button"><Camera className="mr-2 h-4 w-4"/>Adjuntar Foto</Button>
                     </CardContent>
                 </Card>
 
@@ -174,9 +246,19 @@ export default function FormularioTrabajoPage() {
                     name="observaciones"
                     render={({ field }) => (
                         <FormItem>
-                        <FormLabel className="text-base font-semibold">📝 Observaciones Adicionales</FormLabel>
-                        <FormControl><Textarea placeholder="Recomendaciones, notas, etc." {...field} /></FormControl>
-                        <FormMessage />
+                            <FormLabel className="text-base font-semibold">📝 Observaciones Adicionales</FormLabel>
+                             <div className="relative">
+                                <FormControl>
+                                    <Textarea placeholder="Recomendaciones, notas, etc." {...field} className="pr-20"/>
+                                </FormControl>
+                                <div className="absolute top-1 right-1 flex">
+                                     <VoiceInputControl field={field} onTranscript={(text) => field.onChange(field.value ? `${field.value} ${text}`: text)} />
+                                     <Button type="button" variant="ghost" size="icon" onClick={() => handleAiAssist("observaciones" as any)}>
+                                        <Sparkles className="h-4 w-4" />
+                                    </Button>
+                                </div>
+                            </div>
+                            <FormMessage />
                         </FormItem>
                     )}
                 />
@@ -200,7 +282,6 @@ export default function FormularioTrabajoPage() {
                     )}
                 />
                 
-                 {/* Barra de acciones inferior fija */}
                  <div className="fixed bottom-0 left-0 right-0 bg-background border-t p-4 flex gap-2">
                     <Button variant="outline" className="flex-1" type="submit">Guardar Borrador</Button>
                     <Button className="flex-1" onClick={handleFinalizar} type="button">Finalizar y Enviar</Button>
