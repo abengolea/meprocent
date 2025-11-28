@@ -2,7 +2,7 @@
 'use client';
 
 import { getAlarmById, mockUsers } from '@/lib/mock-data';
-import { notFound, useRouter } from 'next/navigation';
+import { notFound, useRouter, useParams } from 'next/navigation';
 import { Suspense, useState, useEffect } from 'react';
 import type { Metadata } from 'next';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
@@ -25,10 +25,6 @@ import {
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import { Label } from "@/components/ui/label";
 
-
-type Props = {
-  params: { id: string };
-};
 
 // Metadata generation should be a separate export if we use 'use client' at the top level.
 // However, since we are fetching data inside the component now, we can't generate static metadata easily.
@@ -147,16 +143,17 @@ function AlarmActions({ alarma }: { alarma: Alarma }) {
 }
 
 
-export default function AlarmDetailPage({ params }: Props) {
+export default function AlarmDetailPage() {
+  const params = useParams();
   const [alarma, setAlarma] = useState<Alarma | null>(null);
   const [loading, setLoading] = useState(true);
+  const alarmId = Array.isArray(params.id) ? params.id[0] : params.id;
 
   useEffect(() => {
-    // params.id is available on the client-side inside useEffect
-    if (params.id) {
+    if (alarmId) {
       const fetchAlarm = async () => {
           setLoading(true);
-          const fetchedAlarm = await getAlarmById(params.id);
+          const fetchedAlarm = await getAlarmById(alarmId);
           if (fetchedAlarm) {
               setAlarma(fetchedAlarm);
           } else {
@@ -166,7 +163,7 @@ export default function AlarmDetailPage({ params }: Props) {
       };
       fetchAlarm();
     }
-  }, [params.id]);
+  }, [alarmId]);
 
 
   if (loading || !alarma) {
@@ -283,3 +280,5 @@ export default function AlarmDetailPage({ params }: Props) {
     </div>
   );
 }
+
+    
