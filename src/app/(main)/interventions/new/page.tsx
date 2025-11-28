@@ -1,13 +1,24 @@
 
+'use client';
+
 import type { Metadata } from "next";
+import { Suspense } from "react";
+import { useSearchParams } from "next/navigation";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
+import { InterventionForm } from "@/components/interventions/intervention-form";
+import { Skeleton } from "@/components/ui/skeleton";
 
-export const metadata: Metadata = {
-    title: "Nueva Intervención | MaintWise",
-    description: "Crear una nueva intervención de mantenimiento.",
-};
+// Metadata cannot be dynamic in a client component, but we keep a static one.
+// export const metadata: Metadata = {
+//     title: "Nueva Intervención | MaintWise",
+//     description: "Crear una nueva intervención de mantenimiento.",
+// };
 
-export default function NewInterventionPage() {
+function NewInterventionPageContent() {
+    const searchParams = useSearchParams();
+    const alarmId = searchParams.get('alarmId');
+    const equipoId = searchParams.get('equipoId');
+
     return (
         <div className="flex flex-col gap-6">
             <div>
@@ -20,13 +31,52 @@ export default function NewInterventionPage() {
                 <CardHeader>
                     <CardTitle>Detalles de la Intervención</CardTitle>
                     <CardDescription>
-                        (Formulario de intervención en desarrollo)
+                        Proporcione la información necesaria para la nueva tarea de mantenimiento.
                     </CardDescription>
                 </CardHeader>
                 <CardContent>
-                   <p className="text-sm text-muted-foreground">Aquí irá el formulario para crear una nueva intervención, pre-cargando los datos desde la alarma si corresponde.</p>
+                   <InterventionForm alarmId={alarmId} equipoId={equipoId} />
                 </CardContent>
             </Card>
         </div>
+    );
+}
+
+const FormSkeleton = () => (
+    <div className="space-y-8">
+        <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+            <div className="space-y-2">
+                <Skeleton className="h-4 w-1/4" />
+                <Skeleton className="h-10 w-full" />
+            </div>
+        </div>
+        <div className="space-y-2">
+            <Skeleton className="h-4 w-1/4" />
+            <Skeleton className="h-24 w-full" />
+        </div>
+        <div className="flex justify-end">
+            <Skeleton className="h-10 w-24" />
+        </div>
+    </div>
+);
+
+
+export default function NewInterventionPage() {
+    return (
+        <Suspense fallback={<FormSkeleton />}>
+            <NewInterventionPageContent />
+        </Suspense>
     );
 }
