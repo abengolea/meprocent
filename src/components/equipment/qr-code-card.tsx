@@ -13,24 +13,31 @@ interface QrCodeCardProps {
     equipo: Equipo;
 }
 
-const PrintableQrCode = React.forwardRef<HTMLDivElement, { qrValue: string; equipo: Equipo }>(({ qrValue, equipo }, ref) => {
-    return (
-        <div ref={ref} className="p-4 bg-white text-black flex flex-col items-center justify-center">
-            <h2 className="text-xl font-bold mb-2">{equipo.descripcion}</h2>
-            <p className="text-sm mb-4">{equipo.codigoInterno}</p>
-            <QRCode
-                value={qrValue}
-                size={256}
-                viewBox={`0 0 256 256`}
-            />
-        </div>
-    )
-});
-PrintableQrCode.displayName = 'PrintableQrCode';
+// Componente de clase para la impresión, como recomienda la documentación de react-to-print
+class ComponentToPrint extends React.Component<{ qrValue: string; equipo: Equipo }> {
+    render() {
+        const { qrValue, equipo } = this.props;
+        return (
+            <div className="p-8 bg-white text-black flex flex-col items-center justify-center text-center">
+                <h2 className="text-2xl font-bold mb-2">{equipo.descripcion}</h2>
+                <p className="text-lg mb-4">{equipo.codigoInterno}</p>
+                <div className="p-4 bg-white">
+                    <QRCode
+                        value={qrValue}
+                        size={256}
+                        viewBox={`0 0 256 256`}
+                    />
+                </div>
+                <p className="text-sm mt-4">{equipo.ubicacion.planta} - {equipo.ubicacion.sector}</p>
+            </div>
+        );
+    }
+}
+
 
 export function QrCodeCard({ equipo }: QrCodeCardProps) {
     const [qrValue, setQrValue] = useState('');
-    const printRef = useRef<HTMLDivElement>(null);
+    const printRef = useRef<ComponentToPrint>(null);
 
     useEffect(() => {
         // Ensure this runs only on the client
@@ -66,7 +73,7 @@ export function QrCodeCard({ equipo }: QrCodeCardProps) {
                     <div className="aspect-square bg-muted rounded-lg animate-pulse" />
                 )}
                 <div style={{ display: 'none' }}>
-                    <PrintableQrCode ref={printRef} qrValue={qrValue} equipo={equipo} />
+                    {qrValue && <ComponentToPrint ref={printRef} qrValue={qrValue} equipo={equipo} />}
                 </div>
             </CardContent>
             <CardFooter>
