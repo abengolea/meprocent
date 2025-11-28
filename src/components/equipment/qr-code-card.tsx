@@ -7,48 +7,67 @@ import QRCode from "react-qr-code";
 import { QrCode as QrCodeIcon, Printer } from "lucide-react";
 import { useEffect, useState, useRef } from "react";
 import { Button } from "@/components/ui/button";
-import { useReactToPrint } from "react-to-print";
 
 interface QrCodeCardProps {
     equipo: Equipo;
 }
 
-// Componente de clase para la impresión, como recomienda la documentación de react-to-print
-class ComponentToPrint extends React.Component<{ qrValue: string; equipo: Equipo }> {
-    render() {
-        const { qrValue, equipo } = this.props;
-        return (
-            <div className="p-8 bg-white text-black flex flex-col items-center justify-center text-center">
-                <h2 className="text-2xl font-bold mb-2">{equipo.descripcion}</h2>
-                <p className="text-lg mb-4">{equipo.codigoInterno}</p>
-                <div className="p-4 bg-white">
-                    <QRCode
-                        value={qrValue}
-                        size={256}
-                        viewBox={`0 0 256 256`}
-                    />
-                </div>
-                <p className="text-sm mt-4">{equipo.ubicacion.planta} - {equipo.ubicacion.sector}</p>
-            </div>
-        );
-    }
-}
-
-
 export function QrCodeCard({ equipo }: QrCodeCardProps) {
     const [qrValue, setQrValue] = useState('');
-    const printRef = useRef<ComponentToPrint>(null);
 
     useEffect(() => {
-        // Ensure this runs only on the client
         const url = `${window.location.origin}/equipment/${equipo.id}`;
         setQrValue(url);
     }, [equipo.id]);
     
-    const handlePrint = useReactToPrint({
-        content: () => printRef.current,
-        documentTitle: `QR-Code-${equipo.codigoInterno}`,
-    });
+    const handlePrint = () => {
+      const printWindow = window.open('', '_blank');
+      if (printWindow) {
+        printWindow.document.write(`
+          <html>
+            <head>
+              <title>Imprimir QR - ${equipo.codigoInterno}</title>
+              <style>
+                @media print {
+                  body {
+                    display: flex;
+                    flex-direction: column;
+                    align-items: center;
+                    justify-content: center;
+                    height: 100vh;
+                    margin: 0;
+                    font-family: sans-serif;
+                  }
+                  .print-container {
+                    text-align: center;
+                  }
+                  h2 { font-size: 24px; margin-bottom: 8px; }
+                  p { font-size: 18px; margin-bottom: 16px; margin-top: 0; }
+                  .qr-wrapper { padding: 16px; background: white; }
+                }
+              </style>
+            </head>
+            <body>
+              <div class="print-container">
+                <h2>${equipo.descripcion}</h2>
+                <p>${equipo.codigoInterno}</p>
+                <div class="qr-wrapper">
+                  ${document.getElementById('qr-code-to-print')?.innerHTML}
+                </div>
+                <p style="margin-top: 16px;">${equipo.ubicacion.planta} - ${equipo.ubicacion.sector}</p>
+              </div>
+              <script>
+                setTimeout(() => {
+                  window.print();
+                  window.close();
+                }, 250);
+              </script>
+            </body>
+          </html>
+        `);
+        printWindow.document.close();
+      }
+    };
 
     return (
         <Card>
@@ -60,20 +79,18 @@ export function QrCodeCard({ equipo }: QrCodeCardProps) {
                 <CardDescription>Escanee para acceder rápidamente a este equipo.</CardDescription>
             </CardHeader>
             <CardContent>
-                {qrValue ? (
-                    <div className="bg-white p-4 rounded-lg flex items-center justify-center">
-                        <QRCode
-                            value={qrValue}
-                            size={256}
-                            style={{ height: "auto", maxWidth: "100%", width: "100%" }}
-                            viewBox={`0 0 256 256`}
-                        />
+                <div className="bg-white p-4 rounded-lg flex items-center justify-center">
+                    <div id="qr-code-to-print">
+                      {qrValue ? (
+                          <QRCode
+                              value={qrValue}
+                              size={256}
+                              viewBox={`0 0 256 256`}
+                          />
+                      ) : (
+                          <div className="aspect-square w-full bg-muted rounded-lg animate-pulse" />
+                      )}
                     </div>
-                ) : (
-                    <div className="aspect-square bg-muted rounded-lg animate-pulse" />
-                )}
-                <div style={{ display: 'none' }}>
-                    {qrValue && <ComponentToPrint ref={printRef} qrValue={qrValue} equipo={equipo} />}
                 </div>
             </CardContent>
             <CardFooter>
