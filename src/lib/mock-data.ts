@@ -367,6 +367,10 @@ export const getAlarms = async (): Promise<Alarma[]> => {
   return new Promise(resolve => setTimeout(() => resolve(mockAlarmas), 500));
 }
 
+export const getAlarmById = async (id: string): Promise<Alarma | undefined> => {
+  return new Promise(resolve => setTimeout(() => resolve(mockAlarmas.find(a => a.id === id)), 300));
+}
+
 export const getEquipos = async (): Promise<Equipo[]> => {
   return new Promise(resolve => setTimeout(() => resolve(mockEquipos), 500));
 }

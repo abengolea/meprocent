@@ -43,9 +43,7 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
     }
 
     const handleRowClick = (alarmId: string) => {
-        // En un futuro, esto navegará a la página de detalle de la alarma
-        // router.push(`/alarms/${alarmId}`);
-        console.log(`Navegando a la alarma: ${alarmId}`);
+        router.push(`/alarms/${alarmId}`);
     };
     
     if (!isClient) {
@@ -81,7 +79,7 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
                         <TableRow 
                             key={alarma.id}
                             onClick={() => handleRowClick(alarma.id)}
-                            className="cursor-pointer"
+                            className="cursor-pointer hover:bg-muted/50"
                         >
                             <TableCell className="font-medium">{alarma.numeroAlarma}</TableCell>
                             <TableCell>{alarma.titulo}</TableCell>
