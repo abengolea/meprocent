@@ -29,6 +29,8 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
+import { useState } from 'react';
+import { QrScanner } from './qr-scanner';
 
 // Simulamos que el rol del usuario se obtiene de una sesión
 const userRole = 'tecnico'; // Cambiar a 'admin' o 'supervisor' para ver otras vistas
@@ -46,6 +48,7 @@ const allNavItems = [
 
 export function MainNav() {
   const pathname = usePathname();
+  const [dialogOpen, setDialogOpen] = useState(false);
 
   const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
@@ -75,7 +78,7 @@ export function MainNav() {
         </SidebarMenu>
       </div>
        <div className="mt-auto p-4">
-        <Dialog>
+        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
             <DialogTrigger asChild>
                 <SidebarMenuButton className="w-full justify-center">
                     <QrCode className="mr-2 h-4 w-4" />
@@ -84,14 +87,12 @@ export function MainNav() {
             </DialogTrigger>
             <DialogContent className="sm:max-w-md">
                 <DialogHeader>
-                    <DialogTitle>Escanear Código QR</DialogTitle>
+                    <DialogTitle>Escanear Código QR de Equipo</DialogTitle>
                     <DialogDescription>
-                        Funcionalidad de escáner QR próximamente. Apunte la cámara de su dispositivo al código QR del equipo para ver sus detalles.
+                        Apunte la cámara al código QR. Será redirigido automáticamente.
                     </DialogDescription>
                 </DialogHeader>
-                <div className="flex items-center justify-center p-8 bg-muted rounded-lg">
-                    <QrCode className="h-32 w-32 text-muted-foreground" />
-                </div>
+                {dialogOpen && <QrScanner onScanSuccess={() => setDialogOpen(false)} />}
             </DialogContent>
         </Dialog>
       </div>
