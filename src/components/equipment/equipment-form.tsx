@@ -73,6 +73,9 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   const [loading, setLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const isEditMode = !!equipo;
+  
+  // Asumimos que el usuario pertenece a la empresa 'empresa-1'
+  const userEmpresaId = 'empresa-1';
 
   useEffect(() => {
     setIsClient(true);
@@ -90,7 +93,8 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   } : {
       codigoInterno: "",
       descripcion: "",
-      planta: "Planta Principal",
+      planta: "Planta Principal", // Valor por defecto de la empresa del usuario
+      sector: "",
       potencia: "",
       voltaje: "",
       corriente: "",
@@ -122,7 +126,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
       router.refresh(); // Forzar la actualización de la página de detalles
     } else {
       const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
-      const newData = { ...finalData, qrCodeId };
+      const newData = { ...finalData, qrCodeId, empresaId: userEmpresaId };
 
       console.log("Datos del nuevo equipo:", newData);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -199,7 +203,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     <FormItem>
                     <FormLabel>Planta</FormLabel>
                     <FormControl>
-                        <Input placeholder="Ej: Planta Principal" {...field} disabled={loading}/>
+                        <Input placeholder="Ej: Planta Principal" {...field} disabled={true}/>
                     </FormControl>
                     <FormMessage />
                     </FormItem>
