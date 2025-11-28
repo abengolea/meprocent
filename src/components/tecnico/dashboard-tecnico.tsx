@@ -1,7 +1,7 @@
 
 "use client";
 
-import React, { useState, useEffect, useMemo } from 'react';
+import React, { useMemo, useState, useEffect } from 'react';
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Badge } from '@/components/ui/badge';
@@ -27,9 +27,10 @@ interface TrabajosClasificados {
 }
 
 export function DashboardTecnico({ user, intervenciones }: DashboardTecnicoProps) {
-    const [currentTime, setCurrentTime] = useState(new Date());
+    const [currentTime, setCurrentTime] = useState<Date | null>(null);
 
     useEffect(() => {
+        setCurrentTime(new Date());
         const timer = setInterval(() => setCurrentTime(new Date()), 60000); // Actualiza cada minuto
         return () => clearInterval(timer);
     }, []);
@@ -60,9 +61,11 @@ export function DashboardTecnico({ user, intervenciones }: DashboardTecnicoProps
         <div className="flex flex-col gap-6 pb-8">
             <header className="space-y-1">
                 <h1 className="text-2xl font-bold tracking-tight">👋 Hola, {user.displayName.split(' ')[0]}</h1>
-                <p className="text-muted-foreground text-sm">
-                    {formatDate(currentTime, 'eeee, d \'de\' MMMM \'de\' yyyy')} | {formatDate(currentTime, 'p')}
-                </p>
+                {currentTime && (
+                    <p className="text-muted-foreground text-sm">
+                        {formatDate(currentTime, 'eeee, d \'de\' MMMM \'de\' yyyy')} | {formatDate(currentTime, 'p')}
+                    </p>
+                )}
             </header>
 
             <Card>
@@ -212,3 +215,7 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
         </Card>
     );
 }
+
+    
+
+    
