@@ -80,7 +80,7 @@ export interface Empresa {
   razonSocial: string;
   nombreComercial?: string;
   cuit?: string;
-  estructura: {
+  estructura?: {
     plantas: Array<{
       id: string;
       nombre: string;
@@ -93,7 +93,7 @@ export interface Empresa {
       }>;
     }>;
   };
-  configuracion: {
+  configuracion?: {
     horariosOperacion: {
       inicio: string;
       fin: string;
@@ -117,7 +117,7 @@ export interface Empresa {
       permitirOfflineSync: boolean;
     };
   };
-  suscripcion: {
+  suscripcion?: {
     plan: 'basico' | 'profesional' | 'empresarial';
     fechaInicio: Date | Timestamp;
     fechaVencimiento: Date | Timestamp;

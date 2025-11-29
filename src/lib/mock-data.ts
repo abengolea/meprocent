@@ -1,6 +1,6 @@
 
 
-import { Alarma, Equipo, Intervencion, PlanMantenimiento, User } from '@/lib/types';
+import { Alarma, Equipo, Intervencion, PlanMantenimiento, User, Empresa } from '@/lib/types';
 import { subDays, addDays, subHours, subMonths, addMonths, startOfToday, addHours } from 'date-fns';
 
 const now = new Date();
@@ -362,6 +362,16 @@ export const mockAlarmas: Alarma[] = [
     },
 ];
 
+export const mockEmpresas: Empresa[] = [
+    {
+        id: 'empresa-1',
+        razonSocial: 'Mi Empresa S.A.',
+        nombreComercial: 'MaintWise Demo',
+        activa: true,
+        metadata: { createdAt: subDays(now, 500), updatedAt: subDays(now, 1), createdBy: 'system' },
+    }
+]
+
 // Mock Fetch Functions
 export const getAlarms = async (): Promise<Alarma[]> => {
   return new Promise(resolve => setTimeout(() => resolve(mockAlarmas), 500));
@@ -401,4 +411,22 @@ export const getLecturasByEquipoId = async (equipoId: string): Promise<any[]> =>
         corriente: 11.0 + Math.random() * 0.5,
     }));
     return new Promise(resolve => setTimeout(() => resolve(readings), 600));
+}
+
+export const getEmpresas = async (): Promise<Empresa[]> => {
+  return new Promise(resolve => setTimeout(() => resolve(mockEmpresas), 300));
+}
+
+export const getEmpresaById = async (id: string): Promise<Empresa | undefined> => {
+  return new Promise(resolve => setTimeout(() => resolve(mockEmpresas.find(e => e.id === id)), 300));
+}
+
+export const getEquiposByEmpresaId = async (empresaId: string): Promise<Equipo[]> => {
+  const filtered = mockEquipos.filter(e => e.empresaId === empresaId);
+  return new Promise(resolve => setTimeout(() => resolve(filtered), 400));
+}
+
+export const getIntervencionesByEmpresaId = async (empresaId: string): Promise<Intervencion[]> => {
+    const filtered = mockIntervenciones.filter(i => i.empresaId === empresaId);
+    return new Promise(resolve => setTimeout(() => resolve(filtered), 400));
 }

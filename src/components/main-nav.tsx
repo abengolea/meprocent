@@ -1,3 +1,4 @@
+
 'use client';
 
 import Link from 'next/link';
@@ -13,6 +14,7 @@ import {
   Users,
   Settings,
   BarChart,
+  Building,
 } from 'lucide-react';
 
 import { cn } from '@/lib/utils';
@@ -37,6 +39,7 @@ const userRole = 'tecnico'; // Cambiar a 'admin' o 'supervisor' para ver otras v
 
 const allNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/empresas', label: 'Empresas', icon: Building, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
   { href: '/users', label: 'Usuarios', icon: Users, roles: ['admin', 'supervisor'] },
   { href: '/equipment', label: 'Equipos', icon: HardHat, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
   { href: '/interventions', label: 'Intervenciones', icon: Wrench, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
