@@ -1,3 +1,4 @@
+
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
@@ -97,7 +98,7 @@ service cloud.firestore {
         belongsToSameEmpresa(empresaId)
       );
       
-      allow create: if isSuperAdmin();
+      allow create: if hasAnyRole(['super_admin', 'admin']);
       
       allow update: if isSuperAdmin() || 
                        (isAdmin() && belongsToSameEmpresa(empresaId));

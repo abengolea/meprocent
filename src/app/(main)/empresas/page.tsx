@@ -3,23 +3,37 @@ import type { Metadata } from "next";
 import { Suspense } from "react";
 import { getEmpresas } from "@/lib/mock-data";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
-import { Building } from "lucide-react";
+import { Building, PlusCircle } from "lucide-react";
 import Link from "next/link";
 import { Skeleton } from "@/components/ui/skeleton";
+import { Button } from "@/components/ui/button";
 
 export const metadata: Metadata = {
   title: "Empresas | MaintWise",
   description: "Gestión de empresas y clientes.",
 };
 
+// Simulación de rol para mostrar/ocultar el botón
+const userRole = 'admin'; 
+
 export default function EmpresasPage() {
   return (
     <div className="flex flex-col gap-6">
-      <div>
-        <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
-        <p className="text-muted-foreground">
-          Seleccione una empresa para ver sus equipos y tareas.
-        </p>
+      <div className="flex items-center justify-between">
+        <div>
+            <h1 className="text-3xl font-bold tracking-tight">Empresas</h1>
+            <p className="text-muted-foreground">
+              Seleccione una empresa para ver sus equipos y tareas.
+            </p>
+        </div>
+        {userRole === 'admin' && (
+            <Button asChild>
+                <Link href="/empresas/new">
+                    <PlusCircle className="mr-2 h-4 w-4" />
+                    Nueva Empresa
+                </Link>
+            </Button>
+        )}
       </div>
       <Suspense fallback={<EmpresasSkeleton />}>
         <EmpresasLoader />
