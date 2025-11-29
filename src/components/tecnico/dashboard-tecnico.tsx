@@ -56,16 +56,18 @@ export function DashboardTecnico({ user, intervenciones }: DashboardTecnicoProps
     }, [intervenciones, user.id]);
 
     const totalTrabajos = trabajosHoy.urgentes.length + trabajosHoy.pendientes.length + trabajosHoy.enProgreso.length;
+    
+    if (!currentTime) {
+        return null; // O un esqueleto de carga
+    }
 
     return (
         <div className="flex flex-col gap-6 pb-8">
             <header className="space-y-1">
                 <h1 className="text-2xl font-bold tracking-tight">👋 Hola, {user.displayName.split(' ')[0]}</h1>
-                {currentTime && (
-                    <p className="text-muted-foreground text-sm">
-                        {formatDate(currentTime, 'eeee, d \'de\' MMMM \'de\' yyyy')} | {formatDate(currentTime, 'p')}
-                    </p>
-                )}
+                <p className="text-muted-foreground text-sm">
+                    {formatDate(currentTime, 'eeee, d \'de\' MMMM \'de\' yyyy')} | {formatDate(currentTime, 'p')}
+                </p>
             </header>
 
             <Card>
@@ -156,6 +158,12 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
             default: return 'secondary';
         }
     }
+    
+    // Client-side rendering for time-sensitive formats
+    const [isClient, setIsClient] = useState(false);
+    useEffect(() => {
+        setIsClient(true);
+    }, []);
 
     return (
         <Card className={esUrgente && trabajo.estado === 'asignada' ? "border-2 border-destructive" : ""}>
@@ -169,7 +177,7 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
                 <div className="flex items-center gap-2 mt-3">
                     <Badge variant="outline">{trabajo.tipoIntervencion}</Badge>
                     <Badge variant={getPrioridadVariant(trabajo.prioridad)}>{trabajo.prioridad}</Badge>
-                     {trabajo.tiempos.programado && (
+                     {isClient && trabajo.tiempos.programado && (
                         <Badge variant="outline" className="flex items-center gap-1">
                             <Clock className="h-3 w-3"/>
                             {formatDate(new Date(trabajo.tiempos.programado as Date), 'p')}
@@ -182,7 +190,7 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
                         <AlertTriangle className="h-4 w-4"/>
                         <AlertTitle>Atención Inmediata</AlertTitle>
                         <AlertDescription className="text-xs">
-                            Asignado hace {formatDistanceToNow(new Date(trabajo.tiempos.asignado as Date), { locale: es, addSuffix: true })}
+                            Asignado {isClient && formatDistanceToNow(new Date(trabajo.tiempos.asignado as Date), { locale: es, addSuffix: true })}
                         </AlertDescription>
                     </Alert>
                 )}
@@ -215,7 +223,5 @@ function TrabajoCard({ trabajo }: { trabajo: Intervencion }) {
         </Card>
     );
 }
-
-    
 
     
