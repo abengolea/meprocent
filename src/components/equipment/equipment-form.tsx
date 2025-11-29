@@ -42,6 +42,7 @@ const equipmentFormSchema = z.object({
   fabricante: z.string().optional(),
   modelo: z.string().optional(),
   numeroSerie: z.string().optional(),
+  empresa: z.string(),
   planta: z.string().min(1, "La planta es requerida."),
   sector: z.string().min(1, "El sector es requerido."),
   fechaInstalacion: z.date().optional(),
@@ -76,6 +77,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   
   // Asumimos que el usuario pertenece a la empresa 'empresa-1'
   const userEmpresaId = 'empresa-1';
+  const userEmpresaName = 'MaintWise Demo';
 
   useEffect(() => {
     setIsClient(true);
@@ -83,6 +85,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
 
   const defaultValues = isEditMode ? {
     ...equipo,
+    empresa: userEmpresaName,
     planta: equipo.ubicacion.planta,
     sector: equipo.ubicacion.sector,
     fechaInstalacion: equipo.fechaInstalacion ? new Date(equipo.fechaInstalacion as string) : undefined,
@@ -93,6 +96,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   } : {
       codigoInterno: "",
       descripcion: "",
+      empresa: userEmpresaName,
       planta: "Planta Principal", // Valor por defecto de la empresa del usuario
       sector: "",
       potencia: "",
@@ -109,11 +113,12 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   async function onSubmit(data: EquipmentFormValues) {
     setLoading(true);
     
-    // Agrupar características técnicas
-    const { potencia, voltaje, corriente, ...restOfData } = data;
+    // Agrupar características técnicas y ubicación
+    const { potencia, voltaje, corriente, planta, sector, ...restOfData } = data;
     const caracteristicasTecnicas = { potencia, voltaje, corriente };
+    const ubicacion = { planta, sector };
     
-    const finalData = { ...restOfData, caracteristicasTecnicas };
+    const finalData = { ...restOfData, caracteristicasTecnicas, ubicacion };
 
     if (isEditMode) {
       console.log("Datos del equipo a actualizar:", { ...equipo, ...finalData });
@@ -127,6 +132,10 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
     } else {
       const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
       const newData = { ...finalData, qrCodeId, empresaId: userEmpresaId };
+      // Remove empresa name from final data object
+      // @ts-ignore
+      delete newData.empresa;
+
 
       console.log("Datos del nuevo equipo:", newData);
       await new Promise(resolve => setTimeout(resolve, 1500));
@@ -196,6 +205,28 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     </FormItem>
                 )}
             />
+        </div>
+
+        <Separator />
+        <div>
+            <h3 className="text-lg font-medium">Ubicación del Equipo</h3>
+        </div>
+
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+            <FormField
+                control={form.control}
+                name="empresa"
+                render={({ field }) => (
+                    <FormItem>
+                    <FormLabel>Empresa</FormLabel>
+                    <FormControl>
+                        <Input {...field} disabled={true}/>
+                    </FormControl>
+                    <FormDescription>La empresa a la que pertenece el equipo.</FormDescription>
+                    <FormMessage />
+                    </FormItem>
+                )}
+            />
             <FormField
                 control={form.control}
                 name="planta"
@@ -203,8 +234,9 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     <FormItem>
                     <FormLabel>Planta</FormLabel>
                     <FormControl>
-                        <Input placeholder="Ej: Planta Principal" {...field} disabled={true}/>
+                        <Input placeholder="Ej: Planta Principal" {...field} disabled={loading}/>
                     </FormControl>
+                     <FormDescription>La planta donde se encuentra el equipo.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
@@ -218,16 +250,25 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     <FormControl>
                         <Input placeholder="Ej: Línea de Producción 2" {...field} disabled={loading}/>
                     </FormControl>
+                    <FormDescription>El área específica dentro de la planta.</FormDescription>
                     <FormMessage />
                     </FormItem>
                 )}
             />
-            <FormField
+        </div>
+        
+        <Separator />
+        <div>
+            <h3 className="text-lg font-medium">Información Adicional (Opcional)</h3>
+        </div>
+        
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
+             <FormField
                 control={form.control}
                 name="fabricante"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Fabricante (Opcional)</FormLabel>
+                    <FormLabel>Fabricante</FormLabel>
                     <FormControl>
                         <Input placeholder="Ej: Siemens" {...field} disabled={loading}/>
                     </FormControl>
@@ -240,7 +281,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                 name="modelo"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Modelo (Opcional)</FormLabel>
+                    <FormLabel>Modelo</FormLabel>
                     <FormControl>
                         <Input placeholder="Ej: 1LE1" {...field} disabled={loading}/>
                     </FormControl>
@@ -253,7 +294,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                 name="numeroSerie"
                 render={({ field }) => (
                     <FormItem>
-                    <FormLabel>Número de Serie (Opcional)</FormLabel>
+                    <FormLabel>Número de Serie</FormLabel>
                     <FormControl>
                         <Input placeholder="Ej: SN-12345ABC" {...field} disabled={loading}/>
                     </FormControl>
@@ -267,7 +308,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     name="fechaInstalacion"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Fecha de Instalación (Opcional)</FormLabel>
+                            <FormLabel>Fecha de Instalación</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <FormControl>
@@ -308,7 +349,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
                     name="garantiaHasta"
                     render={({ field }) => (
                         <FormItem className="flex flex-col">
-                            <FormLabel>Garantía hasta (Opcional)</FormLabel>
+                            <FormLabel>Garantía hasta</FormLabel>
                             <Popover>
                                 <PopoverTrigger asChild>
                                     <FormControl>
@@ -351,10 +392,7 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
         <Separator />
         
         <div>
-            <h3 className="text-lg font-medium">Características Técnicas</h3>
-            <p className="text-sm text-muted-foreground">
-                Especifique los detalles técnicos del equipo (opcional).
-            </p>
+            <h3 className="text-lg font-medium">Características Técnicas (Opcional)</h3>
         </div>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8">
@@ -413,3 +451,5 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
     </Form>
   );
 }
+
+    
