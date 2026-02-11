@@ -28,31 +28,31 @@ service cloud.firestore {
     match /users/{userId} {
       allow read: if isAuthenticated();
       // Solo el usuario puede actualizar su foto/nombre, admins gestionan roles
-      allow write: if (request.auth.uid == userId) || hasRole('admin');
+      allow write: if (request.auth.uid == userId) || hasRole('admin') || hasRole('super_admin');
     }
 
     // Colección de Empresas
     match /empresas/{empresaId} {
-      allow read: if isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(empresaId));
-      allow write: if hasRole('admin');
+      allow read: if isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(empresaId));
+      allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
     // Colección de Equipos
     match /equipos/{equipoId} {
-      allow read: if isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(resource.data.empresaId));
-      allow write: if hasRole('admin');
+      allow read: if isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(resource.data.empresaId));
+      allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
     // Colección de Insumos/Químicos
     match /insumos/{insumoId} {
       allow read: if isAuthenticated();
-      allow write: if hasRole('admin');
+      allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
     // Colección de Intervenciones (Expedientes)
     match /intervenciones/{intervencionId} {
       // Acceso público vía token para clientes o acceso por empresa para staff
-      allow read: if (isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(resource.data.empresaId))) || 
+      allow read: if (isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(resource.data.empresaId))) || 
                      (request.query.token == resource.data.token);
       
       allow create: if isAuthenticated();
@@ -64,12 +64,12 @@ service cloud.firestore {
         
         // Permiso para el staff
         (isAuthenticated() && (
-          hasRole('admin') || 
+          hasRole('admin') || hasRole('super_admin') ||
           (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid))
         ))
       );
 
-      allow delete: if hasRole('admin');
+      allow delete: if hasRole('admin') || hasRole('super_admin');
     }
   }
 }
