@@ -10,6 +10,7 @@ import {
 import { 
   doc, 
   setDoc, 
+  getDoc,
   serverTimestamp 
 } from 'firebase/firestore';
 import { initializeFirebase } from '@/firebase';
@@ -18,35 +19,42 @@ const { auth, firestore } = initializeFirebase();
 
 /**
  * Sincroniza el perfil de usuario de Auth con la colección 'users' en Firestore.
+ * Si es el email del administrador, otorga permisos de super_admin.
  */
 async function syncUserProfile(user: FirebaseUser, displayName?: string) {
   if (!user || !firestore) return;
 
   const userRef = doc(firestore, 'users', user.uid);
+  const userSnap = await getDoc(userRef);
+  const isSuperAdminEmail = user.email === 'abengolea1@gmail.com';
   
-  // Usamos setDoc con merge para no sobrescribir roles existentes
-  // pero aseguramos que el documento exista con datos básicos.
-  await setDoc(userRef, {
+  const baseData = {
     id: user.uid,
     email: user.email,
     displayName: displayName || user.displayName || 'Usuario',
     photoURL: user.photoURL || '',
     lastLoginAt: serverTimestamp(),
-    // Campos por defecto para nuevos usuarios
     activo: true,
-    createdAt: serverTimestamp(),
-  }, { merge: true });
+  };
+
+  // Si el usuario no existe, o si es el email de super admin (para asegurar el rol)
+  if (!userSnap.exists() || isSuperAdminEmail) {
+    await setDoc(userRef, {
+      ...baseData,
+      role: isSuperAdminEmail ? 'super_admin' : (userSnap.data()?.role || 'cliente'),
+      empresaId: isSuperAdminEmail ? 'meprocent-admin' : (userSnap.data()?.empresaId || 'default'),
+      createdAt: userSnap.exists() ? userSnap.data()?.createdAt : serverTimestamp(),
+    }, { merge: true });
+  } else {
+    // Si ya existe, solo actualizamos datos básicos y último login
+    await setDoc(userRef, baseData, { merge: true });
+  }
 }
 
 export async function signUpEmail(email: string, password: string, displayName?: string) {
   if (!auth) throw new Error('Firebase Auth not initialized');
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   await syncUserProfile(userCredential.user, displayName);
-  
-  // Asignamos rol por defecto si es nuevo
-  const userRef = doc(firestore!, 'users', userCredential.user.uid);
-  await setDoc(userRef, { role: 'cliente', empresaId: 'default' }, { merge: true });
-  
   return userCredential.user;
 }
 
@@ -62,11 +70,6 @@ export async function signInGoogle() {
   const provider = new GoogleAuthProvider();
   const userCredential = await signInWithPopup(auth, provider);
   await syncUserProfile(userCredential.user);
-  
-  // Verificamos si ya tiene rol, si no, asignamos 'cliente'
-  const userRef = doc(firestore!, 'users', userCredential.user.uid);
-  await setDoc(userRef, { role: 'cliente', empresaId: 'default' }, { merge: true });
-  
   return userCredential.user;
 }
 

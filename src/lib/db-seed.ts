@@ -1,13 +1,21 @@
 'use client';
 
-import { collection, addDoc, getDocs, query, limit, serverTimestamp } from 'firebase/firestore';
+import { collection, addDoc, getDocs, query, limit, serverTimestamp, setDoc, doc } from 'firebase/firestore';
 import { Firestore } from 'firebase/firestore';
 
 /**
  * Función para sembrar datos iniciales en Firestore si las colecciones están vacías.
  */
 export async function seedDatabase(db: Firestore, empresaId: string, tecnicoId: string, tecnicoName: string) {
-  // 1. Verificar si ya hay equipos
+  // 1. Asegurar que la empresa exista
+  await setDoc(doc(db, 'empresas', empresaId), {
+    id: empresaId,
+    razonSocial: empresaId === 'meprocent-admin' ? 'Meprocent Global Admin' : 'Empresa Demo S.A.',
+    nombreComercial: empresaId === 'meprocent-admin' ? 'Meprocent' : 'Demo Client',
+    activa: true
+  }, { merge: true });
+
+  // 2. Verificar si ya hay equipos
   const equiposSnap = await getDocs(query(collection(db, 'equipos'), limit(1)));
   if (equiposSnap.empty) {
     console.log('Sembrando equipos...');
@@ -29,7 +37,7 @@ export async function seedDatabase(db: Firestore, empresaId: string, tecnicoId: 
     });
   }
 
-  // 2. Verificar si hay insumos
+  // 3. Verificar si hay insumos
   const insumosSnap = await getDocs(query(collection(db, 'insumos'), limit(1)));
   if (insumosSnap.empty) {
     console.log('Sembrando insumos...');
@@ -42,14 +50,14 @@ export async function seedDatabase(db: Firestore, empresaId: string, tecnicoId: 
     }
   }
 
-  // 3. Crear una intervención de ejemplo
+  // 4. Crear una intervención de ejemplo
   const intSnap = await getDocs(query(collection(db, 'intervenciones'), limit(1)));
   if (intSnap.empty) {
     console.log('Sembrando intervención...');
     await addDoc(collection(db, 'intervenciones'), {
       vertical: 'pest_control',
       locked: false,
-      token: Math.random().toString(36).substring(2),
+      token: Math.random().toString(36).substring(2, 15),
       numeroIntervencion: 'SRV-2024-001',
       equipoId: 'demo-eq-id',
       equipoSnapshot: { codigoInterno: 'TRP-EXT-001', descripcion: 'Trampa Exterior 01', ubicacion: 'Perímetro' },
