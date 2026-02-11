@@ -1,4 +1,3 @@
-
 'use client';
 
 import { collection, addDoc, serverTimestamp, Firestore } from 'firebase/firestore';
@@ -23,10 +22,6 @@ interface AuditLogParams {
   payload?: Record<string, any>;
 }
 
-/**
- * Registra una acción en el historial de auditoría de una intervención.
- * Crucial para cumplimiento normativo y certificación legal.
- */
 export async function writeAuditLog({
   db,
   interventionId,
@@ -48,7 +43,6 @@ export async function writeAuditLog({
       payload,
     });
   } catch (error) {
-    // Los errores aquí no deben bloquear la UI pero sí registrarse
     console.error(`Audit Log Failure [${action}]:`, error);
   }
 }

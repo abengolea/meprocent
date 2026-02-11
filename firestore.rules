@@ -3,7 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // Helpers
     function isSignedIn() {
       return request.auth != null;
     }
@@ -24,44 +23,38 @@ service cloud.firestore {
       return !(get(/databases/$(database)/documents/intervenciones/$(id)).data.locked == true);
     }
 
-    // Colección de Usuarios
     match /users/{userId} {
       allow read: if isSignedIn();
       allow write: if hasRole('admin') || hasRole('super_admin') || request.auth.uid == userId;
     }
 
-    // Colección de Empresas
     match /empresas/{empresaId} {
       allow read: if isSignedIn() && (hasRole('super_admin') || userDoc().empresaId == empresaId);
       allow write: if hasRole('super_admin');
     }
 
-    // Colección de Equipos
     match /equipos/{equipoId} {
       allow read: if isSignedIn() && inCompany(resource.data.empresaId);
       allow write: if isSignedIn() && (hasRole('admin') || hasRole('super_admin'));
     }
 
-    // Colección de Insumos
     match /insumos/{insumoId} {
       allow read: if isSignedIn();
       allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
-    // Colección de Intervenciones
     match /intervenciones/{id} {
-      // El acceso público se gestionará vía Server Actions/Admin SDK para evitar request.query inseguros
+      // El acceso público se gestiona vía API Route / Servidor para validar tokens
       allow read: if isSignedIn() && inCompany(resource.data.empresaId);
       
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
       
       allow update: if isSignedIn() 
         && inCompany(resource.data.empresaId) 
-        && !(resource.data.locked == true);
+        && isNotLocked(id);
 
       allow delete: if hasRole('super_admin');
 
-      // Subcolección de Auditoría: INMUTABLE
       match /audit/{auditId} {
         allow read: if isSignedIn() && inCompany(get(/databases/$(database)/documents/intervenciones/$(id)).data.empresaId);
         allow create: if isSignedIn();

@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -88,45 +87,6 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
         }
     };
 
-    const handleFinalize = async (signerName: string, dni: string) => {
-        if (!signature || !db || !profile || isLocked) {
-            toast({ variant: "destructive", title: "Error", description: "Faltan datos obligatorios." });
-            return;
-        }
-        setIsSaving(true);
-        try {
-            const docRef = doc(db, 'intervenciones', intervencion.id);
-            const signatureData = {
-                image: signature,
-                name: signerName,
-                dni: dni,
-                timestamp: new Date().toISOString()
-            };
-
-            await updateDoc(docRef, {
-                signature: signatureData,
-                locked: true,
-                estado: 'cerrada',
-                closedAt: serverTimestamp()
-            });
-
-            await writeAuditLog({
-                db,
-                interventionId: intervencion.id,
-                action: "SIGNED",
-                userId: profile.id,
-                userName: profile.displayName,
-                payload: { signerName, dni, status: 'LOCKED' }
-            });
-
-            toast({ title: "Expediente Certificado", description: "El documento ha sido bloqueado legalmente." });
-        } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "Error al certificar." });
-        } finally {
-            setIsSaving(false);
-        }
-    };
-
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -168,7 +128,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                             <span className="text-sm font-medium">Link de Certificación para el Cliente</span>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => {
-                            const url = `${window.location.origin}/public/intervencion/${intervencion.id}?token=${intervencion.token}`;
+                            const url = `${window.location.origin}/p/${intervencion.id}?token=${intervencion.token}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copiado", description: "Envía este link al cliente para que firme." });
                         }}>
@@ -292,7 +252,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                             
                             {isLocked ? (
                                 <div className="border rounded-md p-6 bg-green-50/50 flex flex-col items-center border-green-200">
-                                    <img src={signature || ""} alt="Firma" className="max-h-32 mb-4" />
+                                    <img src={intervencion.signature?.image || ""} alt="Firma" className="max-h-32 mb-4" />
                                     <div className="text-center text-xs text-green-700">
                                         <p className="font-bold uppercase tracking-widest">Documento Certificado Digitalmente</p>
                                         <p>Finalizado el {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>
@@ -305,21 +265,15 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                                     </Button>
                                 </div>
                             ) : (
-                                <>
-                                    <SignaturePad onSave={setSignature} onClear={() => setSignature(null)} />
-                                    <Button 
-                                        className="w-full h-14 text-lg font-bold shadow-lg mt-4" 
-                                        disabled={!signature || isSaving}
-                                        onClick={() => {
-                                            const name = (document.getElementById('signerName') as HTMLInputElement).value;
-                                            const dni = (document.getElementById('signerDni') as HTMLInputElement).value;
-                                            handleFinalize(name, dni);
-                                        }}
-                                    >
-                                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
-                                        CERTIFICAR Y CERRAR EXPEDIENTE
+                                <div className="text-center py-8">
+                                    <p className="text-sm text-muted-foreground">La firma del cliente debe realizarse desde el portal público.</p>
+                                    <Button variant="outline" className="mt-4" onClick={() => {
+                                        const url = `${window.location.origin}/p/${intervencion.id}?token=${intervencion.token}`;
+                                        window.open(url, '_blank');
+                                    }}>
+                                        Abrir Portal de Firma
                                     </Button>
-                                </>
+                                </div>
                             )}
                         </CardContent>
                     </Card>
