@@ -9,9 +9,10 @@ import { Input } from "@/components/ui/input";
 import { Textarea } from "@/components/ui/textarea";
 import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
-import { Intervencion, Insumo, Consumption } from "@/lib/types";
-import { mockInsumos } from "@/lib/mock-data";
+import { Intervencion } from "@/lib/types";
 import { SignaturePad } from "./signature-pad";
+import { useFirestore } from "@/firebase";
+import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
 import { 
     ClipboardList, 
     Play, 
@@ -27,37 +28,62 @@ import {
 import { formatDate } from "@/lib/utils";
 
 interface PestControlDossierProps {
-    intervencion: Intervencion;
+    intervencion: Intervencion & { id: string };
     isPublic?: boolean;
 }
 
 export function PestControlDossier({ intervencion, isPublic = false }: PestControlDossierProps) {
     const { toast } = useToast();
+    const db = useFirestore();
     const [activeTab, setActiveTab] = React.useState("solicitud");
     const [isSaving, setIsSaving] = React.useState(false);
-    const [isLocked, setIsLocked] = React.useState(intervencion.locked);
     const [signature, setSignature] = React.useState<string | null>(intervencion.signature?.image || null);
 
     const handleSave = async () => {
+        if (!db) return;
         setIsSaving(true);
-        await new Promise(resolve => setTimeout(resolve, 1000));
-        toast({ title: "Cambios guardados", description: "El expediente ha sido actualizado." });
-        setIsSaving(false);
+        try {
+            const docRef = doc(db, 'intervenciones', intervencion.id);
+            await updateDoc(docRef, {
+                trabajoRealizado: (document.getElementById('trabajoRealizado') as HTMLTextAreaElement)?.value || intervencion.trabajoRealizado,
+                updatedAt: serverTimestamp()
+            });
+            toast({ title: "Cambios guardados", description: "El expediente ha sido actualizado en la nube." });
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "No se pudo guardar." });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
     const handleFinalize = async (signerName: string, dni: string) => {
-        if (!signature) {
-            toast({ variant: "destructive", title: "Error", description: "La firma es obligatoria para cerrar el expediente." });
+        if (!signature || !db) {
+            toast({ variant: "destructive", title: "Error", description: "La firma es obligatoria." });
             return;
         }
         setIsSaving(true);
-        await new Promise(resolve => setTimeout(resolve, 2000));
-        setIsLocked(true);
-        toast({ title: "Expediente Certificado", description: "El documento ha sido bloqueado y sellado legalmente." });
-        setIsSaving(false);
+        try {
+            const docRef = doc(db, 'intervenciones', intervencion.id);
+            await updateDoc(docRef, {
+                signature: {
+                    image: signature,
+                    name: signerName,
+                    dni: dni,
+                    timestamp: new Date().toISOString()
+                },
+                locked: true,
+                estado: 'cerrada',
+                closedAt: serverTimestamp()
+            });
+            toast({ title: "Expediente Certificado", description: "El documento ha sido bloqueado y sellado legalmente." });
+        } catch (e) {
+            toast({ variant: "destructive", title: "Error", description: "Error al certificar el documento." });
+        } finally {
+            setIsSaving(false);
+        }
     };
 
-    const disabled = isLocked || (isPublic && activeTab !== 'conformidad');
+    const disabled = intervencion.locked || (isPublic && activeTab !== 'conformidad');
 
     return (
         <div className="space-y-6">
@@ -65,11 +91,11 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
                 <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">
                         {intervencion.numeroIntervencion}
-                        {isLocked && <Badge variant="secondary" className="ml-2"><Lock className="w-3 h-3 mr-1"/> Cerrado</Badge>}
+                        {intervencion.locked && <Badge variant="secondary" className="ml-2"><Lock className="w-3 h-3 mr-1"/> Certificado</Badge>}
                     </h2>
-                    <p className="text-muted-foreground">Expediente de Servicio de Control de Plagas</p>
+                    <p className="text-muted-foreground">Expediente de Servicio de {intervencion.vertical === 'pest_control' ? 'Control de Plagas' : 'Mantenimiento'}</p>
                 </div>
-                {!isLocked && !isPublic && (
+                {!intervencion.locked && !isPublic && (
                     <Button onClick={handleSave} disabled={isSaving}>
                         {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
                         Guardar Progreso
@@ -89,7 +115,7 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
                     </TabsTrigger>
                     <TabsTrigger value="quimicos" className="flex flex-col py-2 gap-1">
                         <FlaskConical className="w-4 h-4" />
-                        <span className="text-[10px] md:text-xs">Químicos</span>
+                        <span className="text-[10px] md:text-xs">Insumos</span>
                     </TabsTrigger>
                     <TabsTrigger value="evidencia" className="flex flex-col py-2 gap-1">
                         <ImageIcon className="w-4 h-4" />
@@ -97,151 +123,102 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
                     </TabsTrigger>
                     <TabsTrigger value="conformidad" className="flex flex-col py-2 gap-1">
                         <CheckCircle2 className="w-4 h-4" />
-                        <span className="text-[10px] md:text-xs">Firma</span>
+                        <span className="text-[10px] md:text-xs">Certificar</span>
                     </TabsTrigger>
                 </TabsList>
 
-                {/* TAB 1: SOLICITUD */}
                 <TabsContent value="solicitud">
                     <Card>
                         <CardHeader>
                             <CardTitle>Datos del Aviso</CardTitle>
-                            <CardDescription>Información sobre la solicitud del servicio.</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">N° de Aviso</label>
-                                    <Input defaultValue={intervencion.numeroAviso} disabled={disabled} />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium">Solicitante</label>
-                                    <Input defaultValue={intervencion.solicitante} disabled={disabled} />
-                                </div>
+                        <CardContent className="space-y-4 text-sm">
+                            <div className="grid grid-cols-2 gap-4">
+                                <div><p className="font-bold">N° Aviso</p><p>{intervencion.numeroAviso || 'N/A'}</p></div>
+                                <div><p className="font-bold">Solicitante</p><p>{intervencion.solicitante || 'N/A'}</p></div>
                             </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Descripción del Problema</label>
-                                <Textarea defaultValue={intervencion.descripcionProblema} disabled={disabled} rows={4} />
-                            </div>
+                            <div><p className="font-bold">Problema Reportado</p><p className="bg-muted p-3 rounded-md">{intervencion.descripcionProblema || 'No especificado'}</p></div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* TAB 2: EJECUCION */}
                 <TabsContent value="ejecucion">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Detalles de la Tarea</CardTitle>
-                            <CardDescription>Registro de tiempos y procedimientos realizados.</CardDescription>
+                            <CardTitle>Ejecución Técnica</CardTitle>
                         </CardHeader>
                         <CardContent className="space-y-4">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex items-center gap-2"><Clock className="w-4 h-4" /> Hora de Llegada</label>
-                                    <Input type="time" disabled={disabled} />
-                                </div>
-                                <div className="space-y-2">
-                                    <label className="text-sm font-medium flex items-center gap-2"><Clock className="w-4 h-4" /> Hora de Salida</label>
-                                    <Input type="time" disabled={disabled} />
-                                </div>
+                            <div className="space-y-2">
+                                <label className="text-sm font-medium flex items-center gap-2"><User className="w-4 h-4" /> Técnico Interviniente</label>
+                                <Input value={intervencion.tecnicoSnapshot.displayName} disabled />
                             </div>
                             <div className="space-y-2">
-                                <label className="text-sm font-medium flex items-center gap-2"><User className="w-4 h-4" /> Operario Interviniente</label>
-                                <Input defaultValue={intervencion.tecnicoSnapshot.displayName} disabled={true} />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-medium">Procedimiento Técnico</label>
-                                <Textarea defaultValue={intervencion.trabajoRealizado} disabled={disabled} rows={6} placeholder="Describa detalladamente qué hizo..." />
+                                <label className="text-sm font-medium">Procedimiento Realizado</label>
+                                <Textarea id="trabajoRealizado" defaultValue={intervencion.trabajoRealizado} disabled={disabled} rows={8} />
                             </div>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* TAB 3: QUIMICOS */}
                 <TabsContent value="quimicos">
                     <Card>
                         <CardHeader>
                             <CardTitle>Control de Insumos</CardTitle>
-                            <CardDescription>Selección por código interno (M01, M02...).</CardDescription>
                         </CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="border rounded-md">
+                        <CardContent>
+                            <div className="border rounded-md overflow-hidden">
                                 <table className="w-full text-sm">
                                     <thead className="bg-muted">
                                         <tr>
                                             <th className="p-2 text-left">Código</th>
-                                            <th className="p-2 text-left">Nombre Comercial</th>
-                                            <th className="p-2 text-left">Dosis</th>
-                                            <th className="p-2 text-left">Método</th>
+                                            <th className="p-2 text-left">Nombre</th>
+                                            <th className="p-2 text-left">Cantidad</th>
                                         </tr>
                                     </thead>
                                     <tbody>
-                                        {intervencion.consumptions?.filter(c => c.type === 'chemical').map((c, i) => (
+                                        {intervencion.consumptions?.length ? intervencion.consumptions.map((c, i) => (
                                             <tr key={i} className="border-t">
-                                                <td className="p-2 font-mono font-bold text-primary">{c.internalCode}</td>
+                                                <td className="p-2 font-mono text-primary font-bold">{c.internalCode}</td>
                                                 <td className="p-2">{c.name}</td>
                                                 <td className="p-2">{c.qty} {c.unit}</td>
-                                                <td className="p-2">{c.method}</td>
                                             </tr>
-                                        ))}
+                                        )) : (
+                                            <tr><td colSpan={3} className="p-4 text-center text-muted-foreground">No hay insumos registrados.</td></tr>
+                                        )}
                                     </tbody>
                                 </table>
                             </div>
-                            {!disabled && (
-                                <Button variant="outline" className="w-full">
-                                    <FlaskConical className="w-4 h-4 mr-2" /> Agregar Químico (Selector de Código)
-                                </Button>
-                            )}
                         </CardContent>
                     </Card>
                 </TabsContent>
 
-                {/* TAB 4: EVIDENCIA */}
                 <TabsContent value="evidencia">
-                    <Card>
-                        <CardHeader>
-                            <CardTitle>Registro Fotográfico</CardTitle>
-                            <CardDescription>Fotos Antes / Después para soporte legal.</CardDescription>
-                        </CardHeader>
-                        <CardContent>
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                                <div className="aspect-square bg-muted rounded-md flex flex-col items-center justify-center border-2 border-dashed">
-                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                    <span className="text-[10px] mt-2">Subir Foto Antes</span>
-                                </div>
-                                <div className="aspect-square bg-muted rounded-md flex flex-col items-center justify-center border-2 border-dashed">
-                                    <ImageIcon className="w-8 h-8 text-muted-foreground" />
-                                    <span className="text-[10px] mt-2">Subir Foto Después</span>
-                                </div>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <Card><CardContent className="py-12 text-center text-muted-foreground">Módulo de fotos próximamente.</CardContent></Card>
                 </TabsContent>
 
-                {/* TAB 5: CONFORMIDAD */}
                 <TabsContent value="conformidad">
                     <Card>
                         <CardHeader>
-                            <CardTitle>Conformidad del Cliente</CardTitle>
-                            <CardDescription>La firma bloquea el documento permanentemente.</CardDescription>
+                            <CardTitle>Certificación de Conformidad</CardTitle>
+                            <CardDescription>La firma bloquea este documento permanentemente para auditoría.</CardDescription>
                         </CardHeader>
                         <CardContent className="space-y-6">
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                                 <div className="space-y-2">
                                     <label className="text-sm font-medium">Nombre del Responsable</label>
-                                    <Input id="signerName" placeholder="Nombre completo" disabled={isLocked} defaultValue={intervencion.signature?.name} />
+                                    <Input id="signerName" placeholder="Nombre completo" disabled={intervencion.locked} defaultValue={intervencion.signature?.name} />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-sm font-medium">DNI / ID</label>
-                                    <Input id="signerDni" placeholder="Número de documento" disabled={isLocked} defaultValue={intervencion.signature?.dni} />
+                                    <label className="text-sm font-medium">DNI / Documento</label>
+                                    <Input id="signerDni" placeholder="N° de documento" disabled={intervencion.locked} defaultValue={intervencion.signature?.dni} />
                                 </div>
                             </div>
                             
-                            {isLocked ? (
-                                <div className="border rounded-md p-4 bg-muted/50 flex flex-col items-center">
-                                    <img src={signature || ""} alt="Firma" className="max-h-32 mb-2" />
-                                    <div className="text-center text-xs text-muted-foreground">
-                                        <p>Documento firmado electrónicamente</p>
+                            {intervencion.locked ? (
+                                <div className="border rounded-md p-6 bg-green-50/50 flex flex-col items-center border-green-200">
+                                    <img src={signature || ""} alt="Firma" className="max-h-32 mb-4" />
+                                    <div className="text-center text-xs text-green-700">
+                                        <p className="font-bold">DOCUMENTO CERTIFICADO POR EL CLIENTE</p>
                                         <p>Fecha: {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>
                                     </div>
                                 </div>
@@ -249,7 +226,7 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
                                 <>
                                     <SignaturePad onSave={setSignature} onClear={() => setSignature(null)} />
                                     <Button 
-                                        className="w-full h-12 text-lg" 
+                                        className="w-full h-14 text-lg font-bold shadow-lg" 
                                         disabled={!signature || isSaving}
                                         onClick={() => {
                                             const name = (document.getElementById('signerName') as HTMLInputElement).value;
@@ -257,8 +234,8 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
                                             handleFinalize(name, dni);
                                         }}
                                     >
-                                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-5 h-5 mr-2" />}
-                                        Firmar y Certificar Expediente
+                                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <CheckCircle2 className="w-6 h-6 mr-2" />}
+                                        CERTIFICAR Y FINALIZAR
                                     </Button>
                                 </>
                             )}

@@ -1,12 +1,14 @@
+
 'use client';
 
-import { useState } from "react";
+import { useState, useMemo } from "react";
 import { useUser, useCollection, useFirestore } from "@/firebase";
 import { collection, query, where, orderBy, limit } from "firebase/firestore";
 import { DashboardTecnico } from "@/components/tecnico/dashboard-tecnico";
-import { Intervencion } from "@/lib/types";
+import { Intervencion, Equipo, User } from "@/lib/types";
 import { RecentAlarms } from "@/components/dashboard/recent-alarms";
 import { RecentInterventions } from "@/components/dashboard/recent-interventions";
+import { StatsCards } from "@/components/dashboard/stats-cards";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Button } from "@/components/ui/button";
 import { Database, Loader2 } from "lucide-react";
@@ -19,12 +21,22 @@ export default function DashboardPage() {
     const { toast } = useToast();
     const [seeding, setSeeding] = useState(false);
 
-    // Query para intervenciones (si es técnico, solo las suyas)
-    const interventionsQuery = profile?.role === 'admin' || profile?.role === 'supervisor'
-        ? query(collection(db, "intervenciones"), orderBy("fechaInicio", "desc"), limit(10))
-        : query(collection(db, "intervenciones"), where("tecnicoId", "==", profile?.id || ""), orderBy("fechaInicio", "desc"), limit(10));
+    // Queries reales
+    const interventionsQuery = useMemo(() => {
+        if (!db || !profile) return null;
+        if (profile.role === 'admin' || profile.role === 'super_admin' || profile.role === 'supervisor') {
+            return query(collection(db, "intervenciones"), orderBy("fechaInicio", "desc"), limit(10));
+        }
+        return query(collection(db, "intervenciones"), where("tecnicoId", "==", profile.id), orderBy("fechaInicio", "desc"), limit(10));
+    }, [db, profile]);
 
-    const { data: intervenciones, loading: dataLoading } = useCollection<Intervencion>(db ? interventionsQuery : null);
+    const equiposQuery = useMemo(() => {
+        if (!db || !profile) return null;
+        return query(collection(db, "equipos"));
+    }, [db, profile]);
+
+    const { data: intervenciones, loading: dataLoading } = useCollection<Intervencion>(interventionsQuery);
+    const { data: equipos } = useCollection<Equipo>(equiposQuery);
 
     const handleSeed = async () => {
         if (!db || !profile) return;
@@ -41,19 +53,20 @@ export default function DashboardPage() {
     }
 
     if (userLoading) return <DashboardSkeleton />;
-    if (!profile) return <div>Inicie sesión para continuar.</div>;
+    if (!profile) return <div className="p-8 text-center">Inicie sesión para continuar.</div>;
 
-    // Vista para Admin/Supervisor
-    if (profile.role === 'admin' || profile.role === 'supervisor') {
+    const isStaff = ['admin', 'super_admin', 'supervisor'].includes(profile.role);
+
+    if (isStaff) {
         const isEmpty = !dataLoading && (!intervenciones || intervenciones.length === 0);
 
         return (
              <div className="flex flex-col gap-6">
                 <header className="flex items-center justify-between">
                     <div>
-                        <h1 className="text-3xl font-bold tracking-tight">Dashboard Administrativo</h1>
+                        <h1 className="text-3xl font-bold tracking-tight">Panel Administrativo</h1>
                         <p className="text-muted-foreground">
-                            Métricas de mantenimiento y control de plagas para {profile.empresaId}.
+                            Resumen de gestión industrial para {profile.empresaId === 'meprocent-admin' ? 'MEPROCENT Global' : profile.empresaId}.
                         </p>
                     </div>
                     {isEmpty && (
@@ -64,17 +77,21 @@ export default function DashboardPage() {
                     )}
                 </header>
                 
-                <div className="grid grid-cols-1 gap-6">
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <RecentInterventions intervenciones={intervenciones || []} />
-                        <RecentAlarms alarms={[]} />
-                    </div>
+                <StatsCards 
+                    equipos={equipos || []} 
+                    alarmas={[]} 
+                    intervenciones={intervenciones || []} 
+                    usuarios={[]} 
+                />
+
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                    <RecentInterventions intervenciones={intervenciones || []} />
+                    <RecentAlarms alarms={[]} />
                 </div>
             </div>
         );
     }
     
-    // Dashboard del Técnico
     return (
         <DashboardTecnico user={profile} intervenciones={intervenciones || []} />
     );
@@ -82,11 +99,10 @@ export default function DashboardPage() {
 
 const DashboardSkeleton = () => (
     <div className="space-y-6">
-        <div className="space-y-2">
-            <Skeleton className="h-8 w-48" />
-            <Skeleton className="h-4 w-64" />
-        </div>
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+        <Skeleton className="h-8 w-48" />
+        <Skeleton className="h-4 w-64" />
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+            <Skeleton className="h-32 w-full" />
             <Skeleton className="h-32 w-full" />
             <Skeleton className="h-32 w-full" />
             <Skeleton className="h-32 w-full" />
