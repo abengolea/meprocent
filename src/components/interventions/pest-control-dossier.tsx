@@ -25,9 +25,13 @@ import {
     Lock,
     Save,
     Loader2,
-    Plus
+    Plus,
+    FileText,
+    Download,
+    ExternalLink
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
+import Link from "next/link";
 
 interface PestControlDossierProps {
     intervencion: Intervencion & { id: string };
@@ -43,9 +47,8 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
     const [insumos, setInsumos] = React.useState<Insumo[]>([]);
     const [signature, setSignature] = React.useState<string | null>(intervencion.signature?.image || null);
 
-    const isLocked = intervencion.locked === true || intervencion.estado === 'cerrada';
+    const isLocked = intervencion.locked === true;
 
-    // Cargar catálogo de químicos
     React.useEffect(() => {
         async function fetchInsumos() {
             if (!db) return;
@@ -134,13 +137,46 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                     </h2>
                     <p className="text-muted-foreground">Servicio de Control de Plagas Certificado</p>
                 </div>
-                {!isLocked && (
-                    <Button onClick={handleSave} disabled={isSaving}>
-                        {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                        Guardar Avance
-                    </Button>
-                )}
+                <div className="flex gap-2">
+                    {isLocked && (
+                        <Button variant="outline" asChild>
+                            <a href={`/api/intervenciones/${intervencion.id}/pdf`} target="_blank">
+                                <Download className="w-4 h-4 mr-2" />
+                                Descargar PDF
+                            </a>
+                        </Button>
+                    )}
+                    {!isLocked ? (
+                        <Button onClick={handleSave} disabled={isSaving}>
+                            {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
+                            Guardar Avance
+                        </Button>
+                    ) : (
+                        <Button variant="ghost" disabled>
+                            <CheckCircle2 className="w-4 h-4 mr-2 text-green-500" />
+                            Documento Cerrado
+                        </Button>
+                    )}
+                </div>
             </div>
+
+            {!isLocked && (
+                <Card className="bg-primary/5 border-primary/20">
+                    <CardContent className="py-4 flex items-center justify-between">
+                        <div className="flex items-center gap-2 text-primary">
+                            <ExternalLink className="w-4 h-4" />
+                            <span className="text-sm font-medium">Link de Certificación para el Cliente</span>
+                        </div>
+                        <Button variant="outline" size="sm" onClick={() => {
+                            const url = `${window.location.origin}/public/intervencion/${intervencion.id}?token=${intervencion.token}`;
+                            navigator.clipboard.writeText(url);
+                            toast({ title: "Link copiado", description: "Envía este link al cliente para que firme." });
+                        }}>
+                            Copiar URL Pública
+                        </Button>
+                    </CardContent>
+                </Card>
+            )}
 
             <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
                 <TabsList className="grid grid-cols-5 w-full h-auto">
@@ -261,6 +297,12 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                                         <p className="font-bold uppercase tracking-widest">Documento Certificado Digitalmente</p>
                                         <p>Finalizado el {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>
                                     </div>
+                                    <Button variant="outline" className="mt-6" asChild>
+                                        <a href={`/api/intervenciones/${intervencion.id}/pdf`} target="_blank">
+                                            <Download className="w-4 h-4 mr-2" />
+                                            Descargar Reporte PDF
+                                        </a>
+                                    </Button>
                                 </div>
                             ) : (
                                 <>
