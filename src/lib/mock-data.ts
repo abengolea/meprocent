@@ -1,13 +1,13 @@
 
 import { Alarma, Equipo, Intervencion, PlanMantenimiento, User, Empresa, Insumo } from '@/lib/types';
-import { subDays, addDays, subHours, subMonths, addMonths, startOfToday, addHours } from 'date-fns';
+import { subDays, subHours } from 'date-fns';
 
 const now = new Date();
 
 export const mockInsumos: Insumo[] = [
-  { id: 'ins-1', type: 'chemical', name: 'Deltametrina 2.5', activeIngredient: 'Deltametrina', registration: 'SENASA 3421', toxicity: 'Clase II' },
-  { id: 'ins-2', type: 'chemical', name: 'Gel Cucarachicida Max', activeIngredient: 'Imidacloprid', registration: 'SENASA 9928', toxicity: 'Clase IV' },
-  { id: 'ins-3', type: 'material', name: 'Bloque Rodenticida', activeIngredient: 'Bromadiolona', registration: 'SENASA 1122', toxicity: 'Clase III' },
+  { id: 'ins-1', internalCode: 'M01', type: 'chemical', name: 'Deltametrina 2.5', activeIngredient: 'Deltametrina', registration: 'SENASA 3421', toxicity: 'Clase II' },
+  { id: 'ins-2', internalCode: 'M02', type: 'chemical', name: 'Gel Cucarachicida Max', activeIngredient: 'Imidacloprid', registration: 'SENASA 9928', toxicity: 'Clase IV' },
+  { id: 'ins-3', internalCode: 'M03', type: 'chemical', name: 'Bloque Rodenticida', activeIngredient: 'Bromadiolona', registration: 'SENASA 1122', toxicity: 'Clase III' },
 ];
 
 export const mockUsers: User[] = [
@@ -57,20 +57,27 @@ export const mockEquipos: Equipo[] = [
 export const mockIntervenciones: Intervencion[] = [
   {
     id: 'int-1',
-    vertical: 'maintenance',
+    vertical: 'pest_control',
     locked: false,
-    numeroIntervencion: 'INT-2024-001',
-    equipoId: 'eq-1',
-    equipoSnapshot: { codigoInterno: 'MOT-PLT1-001', descripcion: 'Motor Línea 1', ubicacion: 'Producción' },
-    tipoIntervencion: 'correctivo',
+    token: 'secure-token-123',
+    numeroIntervencion: 'SRV-2024-001',
+    numeroAviso: 'AV-9988',
+    solicitante: 'Ing. Carlos Gómez',
+    descripcionProblema: 'Presencia de hormigas en sector empaque.',
+    equipoId: 'eq-pest-1',
+    equipoSnapshot: { codigoInterno: 'TRP-EXT-001', descripcion: 'Trampa Exterior 01', ubicacion: 'Perímetro' },
+    tipoIntervencion: 'desinsectacion',
     tecnicoId: 'user-3',
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
-    estado: 'asignada',
-    tiempos: { asignado: subHours(now, 2) },
+    estado: 'en_progreso',
+    tiempos: { asignado: subHours(now, 4) },
     empresaId: 'empresa-1',
     estadoCierre: 'abierta',
-    trabajoRealizado: '',
+    trabajoRealizado: 'Se procede a aplicar gel en zócalos y aberturas.',
     fechaInicio: subHours(now, 2),
+    consumptions: [
+        { type: 'chemical', refId: 'ins-2', name: 'Gel Cucarachicida Max', internalCode: 'M02', qty: 5, unit: 'gr', method: 'Aplicación focalizada' }
+    ]
   }
 ];
 
@@ -84,6 +91,7 @@ export const getAlarmById = async (id: string) => undefined;
 export const getEquipos = async () => mockEquipos;
 export const getEquipoById = async (id: string) => mockEquipos.find(e => e.id === id);
 export const getIntervenciones = async () => mockIntervenciones;
+export const getIntervencionById = async (id: string) => mockIntervenciones.find(i => i.id === id);
 export const getPlanes = async () => [];
 export const getEmpresas = async () => mockEmpresas;
 export const getEmpresaById = async (id: string) => mockEmpresas.find(e => e.id === id);

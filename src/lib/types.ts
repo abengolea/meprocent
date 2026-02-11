@@ -21,10 +21,11 @@ export interface User {
 
 export interface Insumo {
   id: string;
+  internalCode: string; // M01, M02...
   type: 'chemical' | 'material' | 'spare_part';
-  name: string;
+  name: string; // Commercial Name
   activeIngredient?: string;
-  registration?: string;
+  registration?: string; // SENASA Number
   toxicity?: string;
   msdsUrl?: string;
   certificateUrl?: string;
@@ -33,9 +34,11 @@ export interface Insumo {
 export interface Consumption {
   type: 'chemical' | 'material' | 'spare_part';
   refId: string;
-  name: string; // Denormalized for reports
+  name: string; 
+  internalCode?: string;
   qty: number;
   unit: string;
+  method?: string; // For pest control: Aspersion, Gel, etc.
   notes?: string;
 }
 
@@ -50,6 +53,7 @@ export interface Signature {
   name: string;
   dni: string;
   timestamp: Date | Timestamp;
+  ip?: string;
 }
 
 export interface Equipo {
@@ -71,9 +75,17 @@ export interface Intervencion {
   id: string;
   vertical: VerticalType;
   locked: boolean;
+  token?: string; // For public client access
   closedAt?: Date | Timestamp;
-  templateId?: string;
   numeroIntervencion: string;
+  
+  // Tab 1: Request
+  numeroAviso?: string;
+  solicitante?: string;
+  sectorSolicitante?: string;
+  descripcionProblema?: string;
+  
+  // Tab 2: Execution
   equipoId: string;
   equipoSnapshot: {
     codigoInterno: string;
@@ -86,26 +98,29 @@ export interface Intervencion {
     displayName: string;
     email: string;
   };
+  operariosIntervinientes?: string[]; // IDs or names
+  horaLlegada?: Date | Timestamp;
+  horaSalida?: Date | Timestamp;
+  
   estado: EstadoIntervencion;
   tiempos: {
     asignado: Date | Timestamp;
     iniciado?: Date | Timestamp;
     finalizado?: Date | Timestamp;
   };
+  
+  // Tab 3: Chemicals & Materials
   consumptions?: Consumption[];
+  
+  // Tab 4: Evidence
   evidence?: Evidence[];
+  
+  // Tab 5: Compliance
   signature?: Signature;
+  
   pdfUrl?: string;
   empresaId: string;
-  // Legacy fields
   estadoCierre: 'abierta' | 'cerrada' | 'pendiente_aprobacion';
   trabajoRealizado: string;
   fechaInicio: Date | Timestamp;
-}
-
-export interface Empresa {
-  id: string;
-  razonSocial: string;
-  nombreComercial?: string;
-  activa: boolean;
 }

@@ -44,13 +44,24 @@ service cloud.firestore {
     }
 
     match /intervenciones/{intervencionId} {
-      allow read: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId);
+      // Allow public access via token for clients
+      allow read: if (isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId)) || 
+                     (request.query.token == resource.data.token);
       
       allow create: if isAuthenticated() && belongsToSameEmpresa(request.resource.data.empresaId);
       
-      allow update: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId) && (
-        // Los admins pueden editar siempre o los técnicos si no está bloqueado
-        hasRole('admin') || (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid || hasRole('supervisor')))
+      allow update: if (
+        // Permiso para el cliente de firmar (solo puede actualizar signature y locked)
+        (request.query.token == resource.data.token && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'closedAt'])) ||
+        
+        // Permiso para el staff
+        (isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId) && (
+          // Admins pueden editar siempre (para correcciones post-bloqueo si es necesario)
+          hasRole('admin') || 
+          // Técnicos solo si no está bloqueado
+          (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid || hasRole('supervisor')))
+        ))
       );
 
       allow delete: if hasRole('admin');
