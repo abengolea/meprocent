@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mountain, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
+import { Loader2, AlertCircle, Copy, Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -27,6 +27,7 @@ import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { signInEmail, signInGoogle } from '@/lib/auth';
 import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
+import { MeprocentLogo, MeprocentText } from '@/components/logo';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor ingrese un correo válido.' }),
@@ -83,8 +84,8 @@ export default function LoginPage() {
     try {
       await signInEmail(values.email, values.password);
       toast({
-        title: 'Inicio de Sesión Exitoso',
-        description: 'Bienvenido a MaintWise.',
+        title: 'Acceso Correcto',
+        description: 'Bienvenido al sistema MEPROCENT.',
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -100,8 +101,8 @@ export default function LoginPage() {
     try {
       await signInGoogle();
       toast({
-        title: 'Inicio de Sesión Exitoso',
-        description: 'Bienvenido a MaintWise.',
+        title: 'Acceso Correcto',
+        description: 'Bienvenido al sistema MEPROCENT.',
       });
       router.push('/dashboard');
     } catch (error: any) {
@@ -122,16 +123,16 @@ export default function LoginPage() {
   };
 
   return (
-    <div className="flex min-h-screen items-center justify-center bg-background p-4">
-      <Card className="w-full max-w-sm">
-        <CardHeader className="text-center">
-          <div className="mb-4 flex justify-center items-center gap-2">
-            <Mountain className="h-8 w-8 text-primary" />
-            <span className="text-2xl font-bold">MaintWise</span>
+    <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
+      <Card className="w-full max-w-sm shadow-2xl border-none">
+        <CardHeader className="text-center pb-2">
+          <div className="mb-6 flex flex-col justify-center items-center gap-4">
+            <MeprocentLogo className="h-20 w-20" />
+            <MeprocentText className="text-center" />
           </div>
-          <CardTitle className="text-2xl">Iniciar Sesión</CardTitle>
+          <CardTitle className="text-xl">Gestión de Mantenimiento</CardTitle>
           <CardDescription>
-            Ingrese sus credenciales para acceder al sistema.
+            Ingrese sus credenciales para acceder.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -141,7 +142,7 @@ export default function LoginPage() {
               <AlertTitle>Dominio no autorizado</AlertTitle>
               <AlertDescription className="space-y-2">
                 <p className="text-xs">
-                  Agrega este host exacto en Firebase (Auth {'>'} Settings {'>'} Authorized domains):
+                  Agrega este host exacto en Firebase (Auth {'>'} Authorized domains):
                 </p>
                 <div className="flex items-center gap-2 bg-destructive-foreground/10 p-2 rounded border border-destructive/20">
                   <code className="text-[10px] break-all flex-1">{currentHost}</code>
@@ -149,9 +150,6 @@ export default function LoginPage() {
                     {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                   </Button>
                 </div>
-                <p className="text-[10px] italic">
-                  No incluyas https:// ni puertos. Solo el texto de arriba.
-                </p>
               </AlertDescription>
             </Alert>
           )}
@@ -163,13 +161,14 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Correo electrónico</FormLabel>
+                    <FormLabel>Usuario / Email</FormLabel>
                     <FormControl>
                       <Input
-                        placeholder="nombre@ejemplo.com"
+                        placeholder="email@meprocent.com"
                         {...field}
                         type="email"
                         disabled={loading}
+                        className="bg-muted/50"
                       />
                     </FormControl>
                     <FormMessage />
@@ -183,15 +182,15 @@ export default function LoginPage() {
                   <FormItem>
                     <FormLabel>Contraseña</FormLabel>
                     <FormControl>
-                      <Input placeholder="********" {...field} type="password" disabled={loading} />
+                      <Input placeholder="********" {...field} type="password" disabled={loading} className="bg-muted/50" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full" disabled={loading}>
+              <Button type="submit" className="w-full font-bold h-12" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-                {loading ? 'Iniciando...' : 'Iniciar Sesión'}
+                {loading ? 'Validando...' : 'ENTRAR AL SISTEMA'}
               </Button>
             </form>
           </Form>
@@ -201,13 +200,13 @@ export default function LoginPage() {
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
-                O continuar con
+                O acceder con
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full" onClick={handleGoogleLogin} disabled={loading}>
+          <Button variant="outline" className="w-full h-12 border-2" onClick={handleGoogleLogin} disabled={loading}>
             <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.3 1.62-3.85 1.62-4.75 0-8.58-3.9-8.58-8.6s3.83-8.6 8.58-8.6c2.6 0 4.5 1.05 5.5 2.05l2.4-2.3c-1.5-1.4-3.4-2.3-5.9-2.3-5.25 0-9.55 4.3-9.55 9.55s4.3 9.55 9.55 9.55c3.1 0 5.2-1.05 6.85-2.65 1.8-1.8 2.35-4.35 2.35-7.6s-.05-1.15-.1-1.65z"></path></svg>
-            Google
+            Google Workspace
           </Button>
         </CardContent>
       </Card>

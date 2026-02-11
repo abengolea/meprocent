@@ -1,36 +1,24 @@
-# MaintWise - Sistema de Gestión de Mantenimiento Electrónico
+# MEPROCENT - Sistema de Gestión de Soluciones Industriales
 
-Este proyecto es un prototipo avanzado de un sistema de gestión de mantenimiento industrial (CMMS) optimizado para dispositivos móviles y potenciado por IA.
+Este proyecto es el sistema centralizado de gestión para **MEPROCENT SOLUCIONES INDUSTRIALES SRL**, optimizado para el seguimiento de mantenimiento y certificación de servicios.
 
-## Funcionalidades Implementadas
+## Funcionalidades Core
 
-### 🚀 Dashboard y Gestión de Tareas
-- **Dashboard del Técnico**: Vista optimizada para el día a día del operario con clasificación de tareas (Urgentes, Pendientes, En Progreso).
-- **Gestión de Intervenciones**: Flujo completo desde la asignación hasta el cierre de la orden de trabajo.
-- **Temporizador de Trabajo**: Seguimiento del tiempo real dedicado a cada tarea.
+### 🛡️ Identidad Corporativa
+- Colores representativos: Azul Marino (#1a2b3c) y Naranja Industrial (#f07d22).
+- Iconografía basada en el casco espartano.
 
-### 🛠️ Gestión de Activos (Equipos)
-- **Inventario de Equipos**: Registro detallado con características técnicas y ubicación exacta.
-- **Sistema de Códigos QR**: Generación e impresión de etiquetas QR para identificación física de activos.
-- **Escáner de Verificación**: Uso de la cámara para confirmar que el técnico está frente al equipo correcto antes de iniciar un trabajo.
+### 🚀 Gestión de Intervenciones Reales
+- **Dashboard del Técnico**: Vista personalizada según rol.
+- **Base de Datos Firebase**: Conexión real a Firestore para persistencia de datos.
+- **Seguridad**: Reglas de acceso granulares (Admin, Supervisor, Técnico, Cliente).
 
-### 🤖 Inteligencia Artificial (Genkit)
-- **Análisis de Anomalías**: Predicción de fallas basada en datos históricos y lecturas de sensores.
-- **Asistente de Reportes**: Generación de informes técnicos profesionales a partir de palabras clave o dictado.
+### 🛠️ Activos y Control
+- **Inventario QR**: Identificación de equipos mediante códigos QR.
+- **Dossier Digital**: Expedientes certificados con firma electrónica del cliente.
 
-### 🏢 Administración y Empresas
-- **Gestión Multi-Empresa**: Organización de equipos e intervenciones por cliente/planta.
-- **Panel de Alarmas**: Monitorización de estados críticos con acciones rápidas de asignación.
-- **Gestión de Usuarios**: Control de acceso basado en roles (Admin, Supervisor, Técnico).
-
-### 📱 Experiencia de Usuario
-- **Interfaz Responsive**: Diseñada para ser utilizada en tablets y smartphones en el campo.
-- **Dictado por Voz**: Integración de reconocimiento de voz para facilitar el reporte de fallas sin necesidad de escribir.
-- **Navegación Precisa**: Breadcrumbs y menús dinámicos para una navegación fluida.
-
-## Tecnologías Utilizadas
-- **Next.js 15 (App Router)**
-- **Tailwind CSS & ShadCN UI**
-- **Genkit (Google Generative AI)**
-- **Firebase (Estructura de datos lista para integración)**
-- **Lucide React (Iconografía)**
+## Tecnologías
+- **Next.js 15**
+- **Firebase (Auth & Firestore)**
+- **Tailwind CSS**
+- **Lucide React**
