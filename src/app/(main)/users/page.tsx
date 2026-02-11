@@ -1,26 +1,32 @@
-import type { Metadata } from "next";
+'use client';
+
 import Link from 'next/link';
-import { PlusCircle } from 'lucide-react';
+import { PlusCircle, Loader2 } from 'lucide-react';
 import { Button } from '@/components/ui/button';
 import { UsersTable } from '@/components/users/users-table';
-import { mockUsers } from '@/lib/mock-data';
-import { Suspense } from "react";
+import { useCollection, useFirestore, useUser } from '@/firebase';
+import { collection, query, where } from 'firebase/firestore';
+import { useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
 import { User } from "@/lib/types";
 
-export const metadata: Metadata = {
-  title: "Usuarios | MaintWise",
-  description: "Gestión de usuarios del sistema.",
-};
+export default function UsersPage({ searchParams }: { searchParams?: { role?: User['role'] } }) {
+  const { profile } = useUser();
+  const db = useFirestore();
 
-type UsersPageProps = {
-  searchParams?: {
-    role?: User['role'];
-  };
-};
+  const usersQuery = useMemo(() => {
+    if (!db || !profile) return null;
+    // Los administradores ven usuarios de su propia empresa
+    let q = query(collection(db, "users"), where("empresaId", "==", profile.empresaId));
+    if (searchParams?.role) {
+      q = query(q, where("role", "==", searchParams.role));
+    }
+    return q;
+  }, [db, profile, searchParams?.role]);
 
-export default function UsersPage({ searchParams }: UsersPageProps) {
+  const { data: users, loading } = useCollection<User>(usersQuery);
+
   return (
     <div className="flex flex-col gap-6">
       <div className="flex items-center justify-between">
@@ -38,20 +44,13 @@ export default function UsersPage({ searchParams }: UsersPageProps) {
         </Button>
       </div>
 
-      <Suspense fallback={<UsersTableSkeleton />}>
-        <UsersLoader role={searchParams?.role} />
-      </Suspense>
+      {loading ? (
+        <UsersTableSkeleton />
+      ) : (
+        <UsersTable users={users || []} />
+      )}
     </div>
   );
-}
-
-async function UsersLoader({ role }: { role?: User['role'] }) {
-    // In a real app, you would fetch users from your database
-    let users = mockUsers;
-    if (role) {
-        users = users.filter(u => u.role === role);
-    }
-    return <UsersTable users={users} />;
 }
 
 const UsersTableSkeleton = () => (
