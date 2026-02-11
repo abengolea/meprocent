@@ -30,7 +30,7 @@
     },
     "Equipo": {
       "title": "Equipo",
-      "description": "Represents a piece of equipment to be maintained.",
+      "description": "Represents a piece of equipment to be maintained or a trap for pest control.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -38,7 +38,14 @@
         "descripcion": { "type": "string" },
         "tipoEquipo": { "type": "string", "enum": ["tablero_electrico", "motor", "bomba", "ups", "transformador", "cebadera", "trampa", "otro"] },
         "estadoActual": { "type": "string", "enum": ["operativo", "fuera_de_servicio", "en_reparacion", "en_mantenimiento"] },
-        "empresaId": { "type": "string" }
+        "empresaId": { "type": "string" },
+        "ubicacion": {
+          "type": "object",
+          "properties": {
+            "planta": { "type": "string" },
+            "sector": { "type": "string" }
+          }
+        }
       },
       "required": ["id", "codigoInterno", "descripcion", "tipoEquipo", "estadoActual", "empresaId"]
     },
@@ -48,13 +55,13 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
+        "internalCode": { "type": "string", "description": "Ej: M01, M02" },
         "type": { "type": "string", "enum": ["chemical", "material", "spare_part"] },
         "name": { "type": "string" },
         "activeIngredient": { "type": "string" },
         "registration": { "type": "string" },
         "toxicity": { "type": "string" },
-        "msdsUrl": { "type": "string", "format": "uri" },
-        "certificateUrl": { "type": "string", "format": "uri" }
+        "msdsUrl": { "type": "string", "format": "uri" }
       }
     },
     "Intervencion": {
@@ -63,15 +70,16 @@
       "type": "object",
       "properties": {
         "id": { "type": "string" },
-        "vertical": { "type": "string", "enum": ["maintenance", "pest_control"], "default": "maintenance" },
+        "vertical": { "type": "string", "enum": ["maintenance", "pest_control"] },
         "locked": { "type": "boolean", "default": false },
+        "token": { "type": "string", "description": "Security token for public access" },
         "closedAt": { "type": "string", "format": "date-time" },
-        "templateId": { "type": "string" },
         "numeroIntervencion": { "type": "string" },
         "equipoId": { "type": "string" },
         "tecnicoId": { "type": "string" },
         "tipoIntervencion": { "type": "string" },
-        "estadoCierre": { "type": "string" },
+        "estado": { "type": "string" },
+        "trabajoRealizado": { "type": "string" },
         "consumptions": {
           "type": "array",
           "items": {
@@ -79,20 +87,11 @@
             "properties": {
               "type": { "type": "string" },
               "refId": { "type": "string" },
+              "name": { "type": "string" },
+              "internalCode": { "type": "string" },
               "qty": { "type": "number" },
               "unit": { "type": "string" },
-              "notes": { "type": "string" }
-            }
-          }
-        },
-        "evidence": {
-          "type": "array",
-          "items": {
-            "type": "object",
-            "properties": {
-              "type": { "type": "string", "enum": ["before", "after", "evidence"] },
-              "url": { "type": "string" },
-              "timestamp": { "type": "string", "format": "date-time" }
+              "method": { "type": "string" }
             }
           }
         },
@@ -105,7 +104,6 @@
             "timestamp": { "type": "string", "format": "date-time" }
           }
         },
-        "pdfUrl": { "type": "string" },
         "empresaId": { "type": "string" }
       },
       "required": ["id", "vertical", "numeroIntervencion", "equipoId", "tecnicoId", "empresaId"]

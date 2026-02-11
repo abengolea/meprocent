@@ -1,45 +1,44 @@
-import type { Metadata } from "next";
+
+'use client';
+
+import { Intervencion } from "@/lib/types";
+import { useCollection, useFirestore } from "@/firebase";
+import { collection, query, orderBy, where } from "firebase/firestore";
 import { InterventionsTable } from "@/components/interventions/interventions-table";
-import { getIntervenciones } from "@/lib/mock-data";
-import { Suspense } from "react";
+import { Suspense, useMemo } from "react";
 import { Skeleton } from "@/components/ui/skeleton";
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
-import { Intervencion } from "@/lib/types";
 
+export default function InterventionsPage({ searchParams }: { searchParams?: { status?: string } }) {
+  const db = useFirestore();
+  
+  const interventionsQuery = useMemo(() => {
+    if (!db) return null;
+    let q = query(collection(db, "intervenciones"), orderBy("fechaInicio", "desc"));
+    if (searchParams?.status) {
+      q = query(q, where("estado", "==", searchParams.status));
+    }
+    return q;
+  }, [db, searchParams?.status]);
 
-export const metadata: Metadata = {
-  title: "Intervenciones | MaintWise",
-  description: "Historial de intervenciones de mantenimiento.",
-};
+  const { data: intervenciones, loading } = useCollection<Intervencion>(interventionsQuery);
 
-type InterventionsPageProps = {
-  searchParams?: {
-    status?: Intervencion['estadoCierre'];
-  };
-};
-
-export default function InterventionsPage({ searchParams }: InterventionsPageProps) {
   return (
     <div className="flex flex-col gap-6">
       <div>
         <h1 className="text-3xl font-bold tracking-tight">Intervenciones</h1>
         <p className="text-muted-foreground">
-          Registro histórico de todas las intervenciones de mantenimiento.
+          Registro histórico de todas las intervenciones de mantenimiento y control de plagas.
         </p>
       </div>
-      <Suspense fallback={<InterventionsTableSkeleton />}>
-        <InterventionsLoader status={searchParams?.status} />
-      </Suspense>
+      
+      {loading ? (
+        <InterventionsTableSkeleton />
+      ) : (
+        <InterventionsTable intervenciones={intervenciones || []} />
+      )}
     </div>
   );
-}
-
-async function InterventionsLoader({ status }: { status?: Intervencion['estadoCierre'] }) {
-    let intervenciones = await getIntervenciones();
-    if (status) {
-        intervenciones = intervenciones.filter(i => i.estadoCierre === status);
-    }
-    return <InterventionsTable intervenciones={intervenciones} />;
 }
 
 const InterventionsTableSkeleton = () => (

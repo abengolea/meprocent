@@ -1,5 +1,5 @@
 
-import type { Timestamp } from 'firebase/firestore';
+import { Timestamp } from 'firebase/firestore';
 
 export type VerticalType = 'maintenance' | 'pest_control';
 
@@ -11,34 +11,27 @@ export interface User {
   empresaId: string;
   activo: boolean;
   photoURL?: string;
-  metadata: {
-    createdAt: Date | Timestamp;
-    updatedAt: Date | Timestamp;
-    lastLogin?: Date | Timestamp;
-    createdBy: string;
-  };
 }
 
 export interface Insumo {
   id: string;
-  internalCode: string; // M01, M02...
+  internalCode: string;
   type: 'chemical' | 'material' | 'spare_part';
-  name: string; // Commercial Name
+  name: string;
   activeIngredient?: string;
-  registration?: string; // SENASA Number
+  registration?: string;
   toxicity?: string;
   msdsUrl?: string;
-  certificateUrl?: string;
 }
 
 export interface Consumption {
   type: 'chemical' | 'material' | 'spare_part';
   refId: string;
-  name: string; 
+  name: string;
   internalCode?: string;
   qty: number;
   unit: string;
-  method?: string; // For pest control: Aspersion, Gel, etc.
+  method?: string;
   notes?: string;
 }
 
@@ -53,7 +46,6 @@ export interface Signature {
   name: string;
   dni: string;
   timestamp: Date | Timestamp;
-  ip?: string;
 }
 
 export interface Equipo {
@@ -75,52 +67,29 @@ export interface Intervencion {
   id: string;
   vertical: VerticalType;
   locked: boolean;
-  token?: string; // For public client access
+  token?: string;
   closedAt?: Date | Timestamp;
   numeroIntervencion: string;
-  
-  // Tab 1: Request
   numeroAviso?: string;
   solicitante?: string;
-  sectorSolicitante?: string;
   descripcionProblema?: string;
-  
-  // Tab 2: Execution
   equipoId: string;
-  equipoSnapshot: {
+  equipoSnapshot?: {
     codigoInterno: string;
     descripcion: string;
     ubicacion: string;
   };
   tipoIntervencion: string;
   tecnicoId: string;
-  tecnicoSnapshot: {
+  tecnicoSnapshot?: {
     displayName: string;
     email: string;
   };
-  operariosIntervinientes?: string[]; // IDs or names
-  horaLlegada?: Date | Timestamp;
-  horaSalida?: Date | Timestamp;
-  
   estado: EstadoIntervencion;
-  tiempos: {
-    asignado: Date | Timestamp;
-    iniciado?: Date | Timestamp;
-    finalizado?: Date | Timestamp;
-  };
-  
-  // Tab 3: Chemicals & Materials
   consumptions?: Consumption[];
-  
-  // Tab 4: Evidence
   evidence?: Evidence[];
-  
-  // Tab 5: Compliance
   signature?: Signature;
-  
-  pdfUrl?: string;
   empresaId: string;
-  estadoCierre: 'abierta' | 'cerrada' | 'pendiente_aprobacion';
   trabajoRealizado: string;
   fechaInicio: Date | Timestamp;
 }
