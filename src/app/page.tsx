@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mountain, Loader2, AlertCircle } from 'lucide-react';
+import { Mountain, Loader2, AlertCircle, Copy, Check } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -38,6 +38,8 @@ export default function LoginPage() {
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
   const [authError, setAuthError] = React.useState<string | null>(null);
+  const [currentHost, setCurrentHost] = React.useState<string>('');
+  const [copied, setCopied] = React.useState(false);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -46,6 +48,12 @@ export default function LoginPage() {
       password: '',
     },
   });
+
+  React.useEffect(() => {
+    if (typeof window !== 'undefined') {
+      setCurrentHost(window.location.hostname);
+    }
+  }, []);
 
   const handleFirebaseError = (error: any) => {
     console.error('Error de Firebase:', error);
@@ -103,6 +111,16 @@ export default function LoginPage() {
     }
   }
 
+  const copyHost = () => {
+    navigator.clipboard.writeText(currentHost);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+    toast({
+      title: 'Copiado',
+      description: 'Dominio copiado al portapapeles.',
+    });
+  };
+
   return (
     <div className="flex min-h-screen items-center justify-center bg-background p-4">
       <Card className="w-full max-w-sm">
@@ -121,8 +139,19 @@ export default function LoginPage() {
             <Alert variant="destructive">
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Dominio no autorizado</AlertTitle>
-              <AlertDescription className="text-xs">
-                Debes agregar este dominio a la lista de "Dominios autorizados" en la consola de Firebase (Authentication > Settings).
+              <AlertDescription className="space-y-2">
+                <p className="text-xs">
+                  Agrega este host exacto en Firebase (Auth {'>'} Settings {'>'} Authorized domains):
+                </p>
+                <div className="flex items-center gap-2 bg-destructive-foreground/10 p-2 rounded border border-destructive/20">
+                  <code className="text-[10px] break-all flex-1">{currentHost}</code>
+                  <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyHost}>
+                    {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
+                  </Button>
+                </div>
+                <p className="text-[10px] italic">
+                  No incluyas https:// ni puertos. Solo el texto de arriba.
+                </p>
               </AlertDescription>
             </Alert>
           )}
