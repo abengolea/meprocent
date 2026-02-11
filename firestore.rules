@@ -3,10 +3,6 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
-    // ============================================
-    // FUNCIONES DE AUTORIZACIÓN
-    // ============================================
-    
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -19,220 +15,45 @@ service cloud.firestore {
       return isAuthenticated() && getUserData().role == role;
     }
     
-    function hasAnyRole(roles) {
-      return isAuthenticated() && getUserData().role in roles;
-    }
-    
-    function isSuperAdmin() {
-      return hasRole('super_admin');
-    }
-    
-    function isAdmin() {
-      return hasRole('admin');
-    }
-    
-    function isSupervisor() {
-      return hasRole('supervisor');
-    }
-    
-    function isTecnicoSenior() {
-      return hasRole('tecnico_senior');
-    }
-    
-    function isTecnico() {
-      return hasRole('tecnico');
-    }
-    
     function belongsToSameEmpresa(empresaId) {
       return isAuthenticated() && getUserData().empresaId == empresaId;
     }
-    
-    function isActive() {
-      return isAuthenticated() && getUserData().activo == true;
+
+    function isNotLocked(resource) {
+      return !('locked' in resource.data) || resource.data.locked == false;
     }
-    
-    function canManageUsers() {
-      return hasAnyRole(['super_admin', 'admin']);
-    }
-    
-    function canApproveIntervenciones() {
-      return hasAnyRole(['admin', 'supervisor']);
-    }
-    
-    function canCreateAlarmas() {
-      return hasAnyRole(['admin', 'supervisor', 'tecnico_senior']);
-    }
-    
-    // ============================================
-    // COLECCIÓN: users
-    // ============================================
-    
+
     match /users/{userId} {
-      allow read: if isAuthenticated() && (
-        request.auth.uid == userId ||
-        hasAnyRole(['super_admin', 'admin', 'supervisor'])
-      );
-      
-      allow create: if (
-        (isSuperAdmin()) ||
-        (isAdmin() && request.resource.data.role in ['supervisor', 'tecnico_senior', 'tecnico'])
-      );
-      
-      allow update: if (
-        (request.auth.uid == userId && 
-         !request.resource.data.diff(resource.data).affectedKeys()
-           .hasAny(['role', 'empresaId', 'activo', 'permissions'])) ||
-        canManageUsers()
-      );
-      
-      allow delete: if isSuperAdmin();
+      allow read: if isAuthenticated();
+      allow write: if hasRole('admin') || hasRole('super_admin');
     }
-    
-    // ============================================
-    // COLECCIÓN: empresas
-    // ============================================
-    
+
     match /empresas/{empresaId} {
-      allow read: if isAuthenticated() && (
-        isSuperAdmin() ||
-        belongsToSameEmpresa(empresaId)
-      );
-      
-      allow create: if hasAnyRole(['super_admin', 'admin']);
-      
-      allow update: if isSuperAdmin() || 
-                       (isAdmin() && belongsToSameEmpresa(empresaId));
-      
-      allow delete: if isSuperAdmin();
+      allow read: if isAuthenticated() && (hasRole('super_admin') || belongsToSameEmpresa(empresaId));
+      allow write: if hasRole('admin') || hasRole('super_admin');
     }
-    
-    // ============================================
-    // COLECCIÓN: equipos
-    // ============================================
-    
+
     match /equipos/{equipoId} {
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId);
-      
-      allow create: if isActive() && 
-                       hasAnyRole(['admin', 'supervisor']) &&
-                       belongsToSameEmpresa(request.resource.data.empresaId);
-      
-      allow update: if isActive() &&
-                       hasAnyRole(['admin', 'supervisor']) &&
-                       belongsToSameEmpresa(resource.data.empresaId);
-      
-      allow delete: if isAdmin() && belongsToSameEmpresa(resource.data.empresaId);
+      allow read: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId);
+      allow write: if hasRole('admin') || hasRole('supervisor');
     }
-    
-    // ============================================
-    // COLECCIÓN: intervenciones
-    // ============================================
-    
+
+    match /insumos/{insumoId} {
+      allow read: if isAuthenticated();
+      allow write: if hasRole('admin');
+    }
+
     match /intervenciones/{intervencionId} {
-      // Lectura
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId) && (
-        hasAnyRole(['admin', 'supervisor']) ||
-        (hasAnyRole(['tecnico_senior', 'tecnico']) && 
-         resource.data.tecnicoId == request.auth.uid)
+      allow read: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId);
+      
+      allow create: if isAuthenticated() && belongsToSameEmpresa(request.resource.data.empresaId);
+      
+      allow update: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId) && (
+        // Los admins pueden editar siempre o los técnicos si no está bloqueado
+        hasRole('admin') || (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid || hasRole('supervisor')))
       );
-      
-      // Creación
-      allow create: if isActive() &&
-                       hasAnyRole(['admin', 'supervisor', 'tecnico_senior', 'tecnico']) &&
-                       belongsToSameEmpresa(request.resource.data.empresaId) &&
-                       request.resource.data.tecnicoId == request.auth.uid;
-      
-      // Modificación
-      allow update: if isActive() && 
-                       belongsToSameEmpresa(resource.data.empresaId) && (
-        // Admin y Supervisor: total
-        hasAnyRole(['admin', 'supervisor']) ||
-        // Técnico propietario: solo si está abierta
-        (resource.data.tecnicoId == request.auth.uid && 
-         resource.data.estadoCierre == 'abierta')
-      );
-      
-      allow delete: if isAdmin() && belongsToSameEmpresa(resource.data.empresaId);
-    }
-    
-    // ============================================
-    // COLECCIÓN: alarmas
-    // ============================================
-    
-    match /alarmas/{alarmaId} {
-      // Lectura
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId) && (
-        hasAnyRole(['admin', 'supervisor']) ||
-        (hasAnyRole(['tecnico_senior', 'tecnico']) && 
-         resource.data.asignadoA == request.auth.uid)
-      );
-      
-      // Creación
-      allow create: if isActive() &&
-                       canCreateAlarmas() &&
-                       belongsToSameEmpresa(request.resource.data.empresaId);
-      
-      // Modificación
-      allow update: if isActive() && 
-                       belongsToSameEmpresa(resource.data.empresaId) && (
-        hasAnyRole(['admin', 'supervisor']) ||
-        (resource.data.asignadoA == request.auth.uid && 
-         !request.resource.data.diff(resource.data).affectedKeys()
-           .hasAny(['severidad', 'asignadoA', 'empresaId']))
-      );
-      
-      allow delete: if isAdmin() && belongsToSameEmpresa(resource.data.empresaId);
-    }
-    
-    // ============================================
-    // COLECCIÓN: asignacionesTareas (NUEVA)
-    // ============================================
-    
-    match /asignacionesTareas/{asignacionId} {
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId) && (
-        hasAnyRole(['admin', 'supervisor']) ||
-        resource.data.tecnicoAsignadoId == request.auth.uid
-      );
-      
-      allow create: if isActive() &&
-                       hasAnyRole(['admin', 'supervisor']) &&
-                       belongsToSameEmpresa(request.resource.data.empresaId);
-      
-      allow update: if isActive() && 
-                       belongsToSameEmpresa(resource.data.empresaId) && (
-        hasAnyRole(['admin', 'supervisor']) ||
-        (resource.data.tecnicoAsignadoId == request.auth.uid &&
-         request.resource.data.estado in ['aceptada', 'en_progreso', 'rechazada'])
-      );
-      
-      allow delete: if hasAnyRole(['admin', 'supervisor']) &&
-                       belongsToSameEmpresa(resource.data.empresaId);
-    }
-    
-    // ============================================
-    // COLECCIÓN: planesMantenimiento
-    // ============================================
-    
-    match /planesMantenimiento/{planId} {
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId);
-      
-      allow write: if hasAnyRole(['admin', 'supervisor']) &&
-                      belongsToSameEmpresa(request.resource.data.empresaId);
-    }
-    
-    // ============================================
-    // COLECCIÓN: lecturasOperacion
-    // ============================================
-    
-    match /lecturasOperacion/{lecturaId} {
-      allow read: if isActive() && belongsToSameEmpresa(resource.data.empresaId);
-      
-      allow create: if isActive() &&
-                       hasAnyRole(['admin', 'supervisor', 'tecnico_senior', 'tecnico']) &&
-                       belongsToSameEmpresa(request.resource.data.empresaId);
-      
-      allow update, delete: if hasAnyRole(['admin', 'supervisor']) &&
-                               belongsToSameEmpresa(resource.data.empresaId);
+
+      allow delete: if hasRole('admin');
     }
   }
 }
