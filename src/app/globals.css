@@ -3,74 +3,74 @@
 @tailwind utilities;
 
 body {
-  font-family: Arial, Helvetica, sans-serif;
+  font-family: 'Inter', sans-serif;
 }
 
 @layer base {
   :root {
-    /* Meprocent Brand Colors */
-    --background: 215 25% 97%;
-    --foreground: 215 40% 10%;
+    /* MEPROCENT BRAND COLORS */
+    --background: 210 20% 98%;
+    --foreground: 212 38% 10%;
     
     --card: 0 0% 100%;
-    --card-foreground: 215 40% 10%;
+    --card-foreground: 212 38% 10%;
     
     --popover: 0 0% 100%;
-    --popover-foreground: 215 40% 10%;
+    --popover-foreground: 212 38% 10%;
     
-    /* Primary Orange from Logo */
-    --primary: 25 95% 53%;
+    /* Industrial Orange #f07d22 */
+    --primary: 27 88% 54%;
     --primary-foreground: 0 0% 100%;
     
-    --secondary: 215 30% 20%;
+    /* Navy Blue #1a2b3c */
+    --secondary: 212 38% 17%;
     --secondary-foreground: 0 0% 100%;
     
-    --muted: 215 15% 90%;
-    --muted-foreground: 215 20% 45%;
+    --muted: 212 20% 92%;
+    --muted-foreground: 212 20% 45%;
     
-    /* Accent Orange */
-    --accent: 25 95% 53%;
+    --accent: 27 88% 54%;
     --accent-foreground: 0 0% 100%;
     
     --destructive: 0 84% 60%;
     --destructive-foreground: 0 0% 98%;
     
-    --border: 215 20% 85%;
-    --input: 215 20% 85%;
-    --ring: 25 95% 53%;
+    --border: 212 20% 85%;
+    --input: 212 20% 85%;
+    --ring: 27 88% 54%;
     
     --radius: 0.5rem;
     
-    /* Sidebar matching the Logo Navy Blue */
-    --sidebar-background: 215 35% 15%;
-    --sidebar-foreground: 0 0% 98%;
-    --sidebar-primary: 25 95% 53%;
+    /* Sidebar matching Navy Blue #1a2b3c */
+    --sidebar-background: 212 38% 17%;
+    --sidebar-foreground: 210 20% 98%;
+    --sidebar-primary: 27 88% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
-    --sidebar-accent: 215 30% 25%;
-    --sidebar-accent-foreground: 0 0% 100%;
-    --sidebar-border: 215 30% 20%;
-    --sidebar-ring: 25 95% 53%;
+    --sidebar-accent: 212 30% 25%;
+    --sidebar-accent-foreground: 210 20% 98%;
+    --sidebar-border: 212 30% 22%;
+    --sidebar-ring: 27 88% 54%;
   }
   .dark {
-    --background: 215 35% 10%;
-    --foreground: 0 0% 98%;
-    --card: 215 35% 12%;
-    --card-foreground: 0 0% 98%;
-    --popover: 215 35% 12%;
-    --popover-foreground: 0 0% 98%;
-    --primary: 25 95% 53%;
+    --background: 212 38% 10%;
+    --foreground: 210 20% 98%;
+    --card: 212 38% 12%;
+    --card-foreground: 210 20% 98%;
+    --popover: 212 38% 12%;
+    --popover-foreground: 210 20% 98%;
+    --primary: 27 88% 54%;
     --primary-foreground: 0 0% 100%;
-    --secondary: 215 30% 20%;
+    --secondary: 212 38% 17%;
     --secondary-foreground: 0 0% 100%;
-    --muted: 215 30% 20%;
-    --muted-foreground: 215 20% 65%;
-    --accent: 25 95% 53%;
+    --muted: 212 30% 20%;
+    --muted-foreground: 212 20% 65%;
+    --accent: 27 88% 54%;
     --accent-foreground: 0 0% 98%;
     --destructive: 0 62% 30%;
     --destructive-foreground: 0 0% 98%;
-    --border: 215 30% 20%;
-    --input: 215 30% 20%;
-    --ring: 25 95% 53%;
+    --border: 212 30% 25%;
+    --input: 212 30% 25%;
+    --ring: 27 88% 54%;
   }
 }
 

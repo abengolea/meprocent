@@ -10,20 +10,23 @@ export function MeprocentLogo({ className }: { className?: string }) {
       xmlns="http://www.w3.org/2000/svg" 
       className={cn("h-10 w-10", className)}
     >
-      {/* Spartan Helmet Crest / Penacho */}
+      {/* Círculo de fondo Azul Marino #1a2b3c */}
+      <circle cx="50" cy="50" r="48" className="fill-secondary" />
+      
+      {/* Casco Espartano - Penacho Naranja #f07d22 */}
       <path 
-        d="M20 45C20 25 40 10 75 15C65 25 60 40 65 55L20 45Z" 
-        fill="currentColor" 
-        className="text-primary"
+        d="M25 45C25 25 45 15 75 20C65 30 62 45 65 60L25 45Z" 
+        className="fill-primary"
       />
-      {/* Helmet Face / Máscara */}
+      
+      {/* Casco Espartano - Máscara Blanca/Gris para contraste */}
       <path 
-        d="M30 40V75L45 85L55 75L65 85L80 75V40H30ZM45 65H35V50H45V65ZM75 65H65V50H75V65Z" 
-        fill="currentColor" 
-        className="text-foreground"
+        d="M35 42V70L50 80L65 70L65 42H35ZM48 60H40V50H48V60ZM60 60H52V50H60V60Z" 
+        fill="white"
       />
-      {/* Decorative Line */}
-      <path d="M30 40C45 35 65 35 80 40" stroke="currentColor" strokeWidth="2" className="text-foreground"/>
+      
+      {/* Línea de detalle del casco */}
+      <path d="M35 42C45 38 55 38 65 42" stroke="white" strokeWidth="2" />
     </svg>
   );
 }

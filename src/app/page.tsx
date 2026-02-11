@@ -127,12 +127,12 @@ export default function LoginPage() {
       <Card className="w-full max-w-sm shadow-2xl border-none">
         <CardHeader className="text-center pb-2">
           <div className="mb-6 flex flex-col justify-center items-center gap-4">
-            <MeprocentLogo className="h-20 w-20" />
+            <MeprocentLogo className="h-24 w-24" />
             <MeprocentText className="text-center" />
           </div>
-          <CardTitle className="text-xl">Gestión de Mantenimiento</CardTitle>
+          <CardTitle className="text-xl font-bold text-secondary">Gestión de Mantenimiento</CardTitle>
           <CardDescription>
-            Ingrese sus credenciales para acceder.
+            Ingrese sus credenciales para acceder al sistema industrial.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -145,7 +145,7 @@ export default function LoginPage() {
                   Agrega este host exacto en Firebase (Auth {'>'} Authorized domains):
                 </p>
                 <div className="flex items-center gap-2 bg-destructive-foreground/10 p-2 rounded border border-destructive/20">
-                  <code className="text-[10px] break-all flex-1">{currentHost}</code>
+                  <code className="text-[10px] break-all flex-1 font-mono">{currentHost}</code>
                   <Button variant="ghost" size="icon" className="h-6 w-6" onClick={copyHost}>
                     {copied ? <Check className="h-3 w-3 text-green-500" /> : <Copy className="h-3 w-3" />}
                   </Button>
@@ -161,14 +161,14 @@ export default function LoginPage() {
                 name="email"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Usuario / Email</FormLabel>
+                    <FormLabel className="text-secondary font-semibold">Usuario / Email</FormLabel>
                     <FormControl>
                       <Input
                         placeholder="email@meprocent.com"
                         {...field}
                         type="email"
                         disabled={loading}
-                        className="bg-muted/50"
+                        className="bg-muted/50 border-secondary/20"
                       />
                     </FormControl>
                     <FormMessage />
@@ -180,15 +180,15 @@ export default function LoginPage() {
                 name="password"
                 render={({ field }) => (
                   <FormItem>
-                    <FormLabel>Contraseña</FormLabel>
+                    <FormLabel className="text-secondary font-semibold">Contraseña</FormLabel>
                     <FormControl>
-                      <Input placeholder="********" {...field} type="password" disabled={loading} className="bg-muted/50" />
+                      <Input placeholder="********" {...field} type="password" disabled={loading} className="bg-muted/50 border-secondary/20" />
                     </FormControl>
                     <FormMessage />
                   </FormItem>
                 )}
               />
-              <Button type="submit" className="w-full font-bold h-12" disabled={loading}>
+              <Button type="submit" className="w-full font-bold h-12 text-lg shadow-lg hover:shadow-primary/20 transition-all" disabled={loading}>
                 {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
                 {loading ? 'Validando...' : 'ENTRAR AL SISTEMA'}
               </Button>
@@ -196,7 +196,7 @@ export default function LoginPage() {
           </Form>
           <div className="relative my-4">
             <div className="absolute inset-0 flex items-center">
-              <span className="w-full border-t" />
+              <span className="w-full border-t border-muted" />
             </div>
             <div className="relative flex justify-center text-xs uppercase">
               <span className="bg-card px-2 text-muted-foreground">
@@ -204,7 +204,7 @@ export default function LoginPage() {
               </span>
             </div>
           </div>
-          <Button variant="outline" className="w-full h-12 border-2" onClick={handleGoogleLogin} disabled={loading}>
+          <Button variant="outline" className="w-full h-12 border-2 border-secondary/10 hover:bg-secondary hover:text-white transition-colors" onClick={handleGoogleLogin} disabled={loading}>
             <svg role="img" viewBox="0 0 24 24" className="mr-2 h-4 w-4"><path fill="currentColor" d="M12.48 10.92v3.28h7.84c-.24 1.84-.85 3.18-1.73 4.1-1.02 1.02-2.3 1.62-3.85 1.62-4.75 0-8.58-3.9-8.58-8.6s3.83-8.6 8.58-8.6c2.6 0 4.5 1.05 5.5 2.05l2.4-2.3c-1.5-1.4-3.4-2.3-5.9-2.3-5.25 0-9.55 4.3-9.55 9.55s4.3 9.55 9.55 9.55c3.1 0 5.2-1.05 6.85-2.65 1.8-1.8 2.35-4.35 2.35-7.6s-.05-1.15-.1-1.65z"></path></svg>
             Google Workspace
           </Button>
