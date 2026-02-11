@@ -1,3 +1,4 @@
+
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -25,10 +26,10 @@ import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
-import { Loader2, Wrench, Bug, FileText, CheckCircle2 } from "lucide-react";
+import { Loader2, Wrench, Bug, FileText, Lock } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
-import { logIntervencionAction } from "@/lib/firestore-utils";
+import { writeAuditLog } from "@/lib/audit";
 import type { Intervencion, Equipo } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
@@ -39,33 +40,38 @@ const interventionFormSchema = z.object({
   tipoIntervencion: z.string().min(1, "Debe seleccionar un tipo."),
   prioridad: z.string(),
   tecnicoAsignadoId: z.string().min(1, "Debe asignar un técnico."),
-  problemaDetectado: z.string().optional(),
   trabajoRealizado: z.string().min(5, "Detalle el trabajo realizado."),
-  chemicalUsed: z.string().optional(),
-  chemicalQty: z.string().optional(),
 });
 
 type InterventionFormValues = z.infer<typeof interventionFormSchema>;
 
 interface InterventionFormProps {
-  intervention?: Intervencion;
-  alarmId?: string | null;
+  intervention?: Intervencion & { id: string };
   equipoId?: string | null;
 }
 
-export function InterventionForm({ intervention, alarmId, equipoId: initialEquipoId }: InterventionFormProps) {
+export function InterventionForm({ intervention, equipoId: initialEquipoId }: InterventionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const db = useFirestore();
   const { profile } = useUser();
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState<Equipo | null>(null);
-  const [step, setStep] = useState<'vertical' | 'form' | 'sign'>(intervention ? 'form' : 'vertical');
+  const [step, setStep] = useState<'vertical' | 'form'>(intervention ? 'form' : 'vertical');
   const [isClosing, setIsClosing] = useState(false);
+
+  const isLocked = intervention?.locked === true;
 
   const form = useForm<InterventionFormValues>({
     resolver: zodResolver(interventionFormSchema),
-    defaultValues: {
+    defaultValues: intervention ? {
+        vertical: intervention.vertical,
+        equipoId: intervention.equipoId,
+        tipoIntervencion: intervention.tipoIntervencion,
+        prioridad: 'normal',
+        trabajoRealizado: intervention.trabajoRealizado,
+        tecnicoAsignadoId: intervention.tecnicoId
+    } : {
       vertical: 'maintenance',
       prioridad: 'normal',
       tipoIntervencion: 'correctivo',
@@ -79,8 +85,9 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
       if (!db) return;
       setLoading(true);
       
-      if (initialEquipoId) {
-        const equipoDoc = await getDoc(doc(db, 'equipos', initialEquipoId));
+      const targetId = intervention?.equipoId || initialEquipoId;
+      if (targetId) {
+        const equipoDoc = await getDoc(doc(db, 'equipos', targetId));
         if (equipoDoc.exists()) {
           const eqData = equipoDoc.data() as Equipo;
           setEquipo({ ...eqData, id: equipoDoc.id });
@@ -91,10 +98,10 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
       setLoading(false);
     }
     fetchData();
-  }, [db, initialEquipoId, form]);
+  }, [db, initialEquipoId, intervention, form]);
 
   const onSubmit = async (data: InterventionFormValues) => {
-    if (!db || !profile || !equipo) return;
+    if (!db || !profile || !equipo || isLocked) return;
 
     setIsClosing(true);
     try {
@@ -102,7 +109,7 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
         vertical: data.vertical,
         locked: false,
         token: Math.random().toString(36).substring(2, 15),
-        numeroIntervencion: `INT-${Date.now().toString().slice(-6)}`,
+        numeroIntervencion: intervention?.numeroIntervencion || `INT-${Date.now().toString().slice(-6)}`,
         equipoId: equipo.id,
         equipoSnapshot: {
           codigoInterno: equipo.codigoInterno,
@@ -118,32 +125,47 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
         estado: 'en_progreso',
         empresaId: profile.empresaId,
         trabajoRealizado: data.trabajoRealizado,
-        fechaInicio: serverTimestamp() as any,
+        fechaInicio: intervention?.fechaInicio || serverTimestamp() as any,
       };
 
-      const newDoc = await addDoc(collection(db, 'intervenciones'), docData);
+      let docId = intervention?.id;
+      if (intervention) {
+          await updateDoc(doc(db, 'intervenciones', intervention.id), docData);
+      } else {
+          const newDoc = await addDoc(collection(db, 'intervenciones'), docData);
+          docId = newDoc.id;
+      }
       
-      // Auditoría: Registro de creación
-      await logIntervencionAction(
-        db, 
-        newDoc.id, 
-        profile.id, 
-        profile.displayName, 
-        'CREACION_INTERVENCION',
-        { vertical: data.vertical, tipo: data.tipoIntervencion }
-      );
+      await writeAuditLog({
+        db,
+        interventionId: docId!,
+        action: intervention ? "UPDATED" : "CREATED",
+        userId: profile.id,
+        userName: profile.displayName,
+        payload: { vertical: data.vertical, type: data.tipoIntervencion }
+      });
 
-      toast({ title: "Éxito", description: "Intervención creada correctamente en Firestore." });
+      toast({ title: "Éxito", description: "Intervención guardada." });
       router.push("/interventions");
     } catch (e) {
-      console.error(e);
-      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la intervención." });
+      toast({ variant: "destructive", title: "Error", description: "Fallo al guardar." });
     } finally {
       setIsClosing(false);
     }
   };
 
   if (loading) return <div className="space-y-4"><Skeleton className="h-20 w-full" /><Skeleton className="h-64 w-full" /></div>;
+
+  if (isLocked) {
+      return (
+          <div className="p-8 border-2 border-dashed rounded-lg flex flex-col items-center gap-4 text-center">
+              <Lock className="w-12 h-12 text-muted-foreground opacity-50" />
+              <h3 className="text-xl font-bold">Intervención Bloqueada</h3>
+              <p className="text-muted-foreground max-w-md">Este registro ha sido certificado y bloqueado para auditoría. No se permiten más modificaciones.</p>
+              <Button variant="outline" onClick={() => router.back()}>Volver al listado</Button>
+          </div>
+      )
+  }
 
   if (step === 'vertical') {
     return (
@@ -152,37 +174,23 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
           <CardHeader className="text-center">
             <Wrench className="w-12 h-12 mx-auto text-primary mb-2" />
             <CardTitle>Mantenimiento</CardTitle>
-            <p className="text-sm text-muted-foreground text-center">Correctivo, Preventivo o Predictivo de Equipos.</p>
+            <p className="text-sm text-muted-foreground">Correctivo, Preventivo o Predictivo.</p>
           </CardHeader>
         </Card>
         <Card className="hover:border-primary cursor-pointer transition-colors" onClick={() => { form.setValue('vertical', 'pest_control'); setStep('form'); }}>
           <CardHeader className="text-center">
             <Bug className="w-12 h-12 mx-auto text-primary mb-2" />
             <CardTitle>Control de Plagas</CardTitle>
-            <p className="text-sm text-muted-foreground text-center">Fumigación, cebado y control de vectores.</p>
+            <p className="text-sm text-muted-foreground">Fumigación y control de vectores.</p>
           </CardHeader>
         </Card>
       </div>
     );
   }
 
-  const isPestControl = form.watch('vertical') === 'pest_control';
-
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
-        <div className="flex items-center gap-2 mb-4 p-2 bg-muted rounded-md w-fit">
-          {isPestControl ? <Bug className="w-4 h-4 text-primary" /> : <Wrench className="w-4 h-4 text-primary" />}
-          <span className="text-sm font-semibold">{isPestControl ? 'Control de Plagas' : 'Mantenimiento Electrónico'}</span>
-        </div>
-
-        {equipo && (
-            <div className="p-4 rounded-lg bg-muted/50 border">
-                <h3 className="font-semibold">{equipo.descripcion}</h3>
-                <p className="text-sm text-muted-foreground">{equipo.codigoInterno} - {equipo.ubicacion.planta}, {equipo.ubicacion.sector}</p>
-            </div>
-        )}
-
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
@@ -193,7 +201,7 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
                 <Select onValueChange={field.onChange} defaultValue={field.value}>
                   <FormControl><SelectTrigger><SelectValue placeholder="Seleccione" /></SelectTrigger></FormControl>
                   <SelectContent>
-                    {isPestControl ? (
+                    {form.watch('vertical') === 'pest_control' ? (
                       <>
                         <SelectItem value="desinsectacion">Desinsectación</SelectItem>
                         <SelectItem value="desratizacion">Desratización</SelectItem>
@@ -231,7 +239,7 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
             name="trabajoRealizado"
             render={({ field }) => (
                 <FormItem>
-                    <FormLabel>{isPestControl ? 'Procedimiento Realizado' : 'Detalle del Trabajo'}</FormLabel>
+                    <FormLabel>Detalle del Trabajo</FormLabel>
                     <FormControl><Textarea rows={4} {...field} /></FormControl>
                     <FormMessage />
                 </FormItem>
@@ -239,10 +247,10 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
         />
 
         <div className="flex justify-between gap-2">
-          <Button type="button" variant="outline" onClick={() => setStep('vertical')} disabled={isClosing}>Cambiar Vertical</Button>
+          {!intervention && <Button type="button" variant="outline" onClick={() => setStep('vertical')}>Cambiar Vertical</Button>}
           <Button type="submit" disabled={isClosing}>
             {isClosing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
-            Guardar Intervención
+            {intervention ? 'Guardar Cambios' : 'Iniciar Intervención'}
           </Button>
         </div>
       </form>

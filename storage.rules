@@ -1,0 +1,28 @@
+
+rules_version = '2';
+service firebase.storage {
+  match /b/{bucket}/o {
+    
+    function isSignedIn() {
+      return request.auth != null;
+    }
+
+    function userDoc() {
+      return firestore.get(/databases/(default)/documents/users/$(request.auth.uid)).data;
+    }
+
+    function interventionDoc(id) {
+      return firestore.get(/databases/(default)/documents/intervenciones/$(id)).data;
+    }
+
+    function inCompanyOfIntervention(id) {
+      return isSignedIn() && (userDoc().empresaId == interventionDoc(id).empresaId || userDoc().role == 'super_admin');
+    }
+
+    match /intervenciones/{interventionId}/{allPaths=**} {
+      allow read: if inCompanyOfIntervention(interventionId);
+      allow write: if inCompanyOfIntervention(interventionId)
+        && !(interventionDoc(interventionId).locked == true);
+    }
+  }
+}
