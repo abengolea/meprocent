@@ -29,7 +29,7 @@ import {
   DialogTitle,
   DialogTrigger,
 } from "@/components/ui/dialog"
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { QrScanner } from './qr-scanner';
 import { useUser } from '@/firebase';
 import { MeprocentLogo, MeprocentText } from './logo';
@@ -49,7 +49,12 @@ const allNavItems = [
 export function MainNav() {
   const pathname = usePathname();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const [mounted, setMounted] = useState(false);
   const { profile } = useUser();
+
+  useEffect(() => {
+    setMounted(true);
+  }, []);
 
   const userRole = profile?.role || 'tecnico';
   const navItems = allNavItems.filter(item => item.roles.includes(userRole));
@@ -80,23 +85,25 @@ export function MainNav() {
         </SidebarMenu>
       </div>
        <div className="mt-auto p-4">
-        <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
-            <DialogTrigger asChild>
-                <SidebarMenuButton className="w-full justify-center h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg">
-                    <QrCode className="mr-2 h-5 w-5" />
-                    <span className="font-bold">Escanear Equipo</span>
-                </SidebarMenuButton>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-md">
-                <DialogHeader>
-                    <DialogTitle>Escanear Código QR de Equipo</DialogTitle>
-                    <DialogDescription>
-                        Apunte la cámara al código QR. MEPROCENT le dirigirá automáticamente.
-                    </DialogDescription>
-                </DialogHeader>
-                {dialogOpen && <QrScanner onScanSuccess={() => setDialogOpen(false)} />}
-            </DialogContent>
-        </Dialog>
+        {mounted && (
+          <Dialog open={dialogOpen} onOpenChange={setDialogOpen}>
+              <DialogTrigger asChild>
+                  <SidebarMenuButton className="w-full justify-center h-12 bg-primary hover:bg-primary/90 text-primary-foreground rounded-lg">
+                      <QrCode className="mr-2 h-5 w-5" />
+                      <span className="font-bold">Escanear Equipo</span>
+                  </SidebarMenuButton>
+              </DialogTrigger>
+              <DialogContent className="sm:max-w-md">
+                  <DialogHeader>
+                      <DialogTitle>Escanear Código QR de Equipo</DialogTitle>
+                      <DialogDescription>
+                          Apunte la cámara al código QR. MEPROCENT le dirigirá automáticamente.
+                      </DialogDescription>
+                  </DialogHeader>
+                  {dialogOpen && <QrScanner onScanSuccess={() => setDialogOpen(false)} />}
+              </DialogContent>
+          </Dialog>
+        )}
       </div>
     </nav>
   );
