@@ -7,6 +7,8 @@ import {
   DocumentData,
   QuerySnapshot,
 } from 'firebase/firestore';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useCollection<T = DocumentData>(query: Query<T> | null) {
   const [data, setData] = useState<T[] | null>(null);
@@ -30,8 +32,14 @@ export function useCollection<T = DocumentData>(query: Query<T> | null) {
         setData(docs);
         setLoading(false);
       },
-      (err) => {
-        console.error('Firestore collection error:', err);
+      async (err) => {
+        if (err.code === 'permission-denied') {
+          const permissionError = new FirestorePermissionError({
+            path: (query as any)._query?.path?.segments?.join('/') || 'unknown',
+            operation: 'list',
+          });
+          errorEmitter.emit('permission-error', permissionError);
+        }
         setError(err);
         setLoading(false);
       }

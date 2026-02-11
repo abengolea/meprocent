@@ -4,6 +4,7 @@ import React, { createContext, useContext, ReactNode } from 'react';
 import { FirebaseApp } from 'firebase/app';
 import { Auth } from 'firebase/auth';
 import { Firestore } from 'firebase/firestore';
+import { FirebaseErrorListener } from '@/components/FirebaseErrorListener';
 
 interface FirebaseContextValue {
   firebaseApp: FirebaseApp | null;
@@ -26,6 +27,7 @@ export function FirebaseProvider({
 }) {
   return (
     <FirebaseContext.Provider value={{ firebaseApp, auth, firestore }}>
+      <FirebaseErrorListener />
       {children}
     </FirebaseContext.Provider>
   );
@@ -42,15 +44,9 @@ export function useFirebase() {
 export const useFirebaseApp = () => useFirebase().firebaseApp;
 
 export const useAuth = () => {
-  const auth = useFirebase().auth;
-  if (!auth) {
-    // In a real app, you might want to throw a specific error or return a proxy
-    // For now, we return null and expected hooks to handle it
-  }
-  return auth as Auth;
+  return useFirebase().auth as Auth;
 };
 
 export const useFirestore = () => {
-  const firestore = useFirebase().firestore;
-  return firestore as Firestore;
+  return useFirebase().firestore as Firestore;
 };

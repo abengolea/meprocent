@@ -1,4 +1,3 @@
-
 'use client';
 
 import { useEffect, useState } from 'react';
@@ -6,6 +5,8 @@ import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
 import { doc, onSnapshot } from 'firebase/firestore';
 import { useAuth, useFirestore } from '../provider';
 import type { User as UserProfile } from '@/lib/types';
+import { errorEmitter } from '@/firebase/error-emitter';
+import { FirestorePermissionError } from '@/firebase/errors';
 
 export function useUser() {
   const auth = useAuth();
@@ -41,7 +42,13 @@ export function useUser() {
       }
       setLoading(false);
     }, (err) => {
-      console.error("Error fetching profile:", err);
+      if (err.code === 'permission-denied') {
+        const permissionError = new FirestorePermissionError({
+          path: userRef.path,
+          operation: 'get',
+        });
+        errorEmitter.emit('permission-error', permissionError);
+      }
       setLoading(false);
     });
 
