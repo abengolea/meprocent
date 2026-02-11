@@ -1,4 +1,3 @@
-
 "use client";
 
 import * as React from "react";
@@ -11,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { useToast } from "@/hooks/use-toast";
 import { Intervencion } from "@/lib/types";
 import { SignaturePad } from "./signature-pad";
-import { useFirestore } from "@/firebase";
+import { useFirestore, useUser } from "@/firebase";
 import { doc, updateDoc, serverTimestamp } from "firebase/firestore";
+import { logIntervencionAction } from "@/lib/firestore-utils";
 import { 
     ClipboardList, 
     Play, 
@@ -35,19 +35,33 @@ interface PestControlDossierProps {
 export function PestControlDossier({ intervencion, isPublic = false }: PestControlDossierProps) {
     const { toast } = useToast();
     const db = useFirestore();
+    const { profile } = useUser();
     const [activeTab, setActiveTab] = React.useState("solicitud");
     const [isSaving, setIsSaving] = React.useState(false);
     const [signature, setSignature] = React.useState<string | null>(intervencion.signature?.image || null);
 
     const handleSave = async () => {
-        if (!db) return;
+        if (!db || !profile) return;
         setIsSaving(true);
         try {
             const docRef = doc(db, 'intervenciones', intervencion.id);
+            const trabajoRealizado = (document.getElementById('trabajoRealizado') as HTMLTextAreaElement)?.value || intervencion.trabajoRealizado;
+            
             await updateDoc(docRef, {
-                trabajoRealizado: (document.getElementById('trabajoRealizado') as HTMLTextAreaElement)?.value || intervencion.trabajoRealizado,
+                trabajoRealizado,
                 updatedAt: serverTimestamp()
             });
+
+            // Registro de Auditoría
+            await logIntervencionAction(
+                db, 
+                intervencion.id, 
+                profile.id, 
+                profile.displayName, 
+                'ACTUALIZACION_TRABAJO_REALIZADO',
+                { length: trabajoRealizado.length }
+            );
+
             toast({ title: "Cambios guardados", description: "El expediente ha sido actualizado en la nube." });
         } catch (e) {
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar." });
@@ -57,24 +71,37 @@ export function PestControlDossier({ intervencion, isPublic = false }: PestContr
     };
 
     const handleFinalize = async (signerName: string, dni: string) => {
-        if (!signature || !db) {
+        if (!signature || !db || !profile) {
             toast({ variant: "destructive", title: "Error", description: "La firma es obligatoria." });
             return;
         }
         setIsSaving(true);
         try {
             const docRef = doc(db, 'intervenciones', intervencion.id);
+            const signatureData = {
+                image: signature,
+                name: signerName,
+                dni: dni,
+                timestamp: new Date().toISOString()
+            };
+
             await updateDoc(docRef, {
-                signature: {
-                    image: signature,
-                    name: signerName,
-                    dni: dni,
-                    timestamp: new Date().toISOString()
-                },
+                signature: signatureData,
                 locked: true,
                 estado: 'cerrada',
                 closedAt: serverTimestamp()
             });
+
+            // Registro de Auditoría Crítico
+            await logIntervencionAction(
+                db, 
+                intervencion.id, 
+                profile.id, 
+                profile.displayName, 
+                'CERTIFICACION_FINAL_CLIENTE',
+                { signerName, dni }
+            );
+
             toast({ title: "Expediente Certificado", description: "El documento ha sido bloqueado y sellado legalmente." });
         } catch (e) {
             toast({ variant: "destructive", title: "Error", description: "Error al certificar el documento." });

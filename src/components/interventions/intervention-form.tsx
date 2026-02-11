@@ -28,10 +28,10 @@ import { useState, useEffect } from "react";
 import { Loader2, Wrench, Bug, FileText, CheckCircle2 } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
 import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { logIntervencionAction } from "@/lib/firestore-utils";
 import type { Intervencion, Equipo } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
-import { SignaturePad } from "./signature-pad";
 
 const interventionFormSchema = z.object({
   vertical: z.enum(['maintenance', 'pest_control']),
@@ -61,7 +61,6 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState<Equipo | null>(null);
   const [step, setStep] = useState<'vertical' | 'form' | 'sign'>(intervention ? 'form' : 'vertical');
-  const [signature, setSignature] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
 
   const form = useForm<InterventionFormValues>({
@@ -79,7 +78,6 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
     async function fetchData() {
       if (!db) return;
       setLoading(true);
-      let targetEquipoId = initialEquipoId;
       
       if (initialEquipoId) {
         const equipoDoc = await getDoc(doc(db, 'equipos', initialEquipoId));
@@ -123,8 +121,18 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
         fechaInicio: serverTimestamp() as any,
       };
 
-      await addDoc(collection(db, 'intervenciones'), docData);
+      const newDoc = await addDoc(collection(db, 'intervenciones'), docData);
       
+      // Auditoría: Registro de creación
+      await logIntervencionAction(
+        db, 
+        newDoc.id, 
+        profile.id, 
+        profile.displayName, 
+        'CREACION_INTERVENCION',
+        { vertical: data.vertical, tipo: data.tipoIntervencion }
+      );
+
       toast({ title: "Éxito", description: "Intervención creada correctamente en Firestore." });
       router.push("/interventions");
     } catch (e) {

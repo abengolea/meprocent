@@ -50,14 +50,14 @@ service cloud.firestore {
 
     // Colección de Intervenciones
     match /intervenciones/{intervencionId} {
-      // El acceso público ahora se valida verificando que el token enviado en el body/get coincida con el almacenado
+      // El acceso público ahora se valida verificando que el token enviado en el body coincida con el almacenado
       allow read: if (isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(resource.data.empresaId))) || 
                      (request.auth == null && resource.data.token == request.resource.data.token);
       
       allow create: if isAuthenticated();
       
       allow update: if (
-        // El cliente firma: solo puede actualizar signature, locked y closedAt si provee el token correcto
+        // El cliente firma: solo puede actualizar signature, locked, closedAt y estado si provee el token correcto y no está bloqueado
         (isNotLocked(resource) && request.resource.data.token == resource.data.token && 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'closedAt', 'estado'])) ||
         
@@ -70,10 +70,12 @@ service cloud.firestore {
 
       allow delete: if hasRole('admin') || hasRole('super_admin');
 
-      // Subcolección de Auditoría
+      // Subcolección de Auditoría: INMUTABLE
+      // Solo se permite crear, nunca borrar ni editar un log de auditoría.
       match /audit/{auditId} {
-        allow read: if isAuthenticated() && (hasRole('admin') || hasRole('super_admin'));
-        allow create: if isAuthenticated(); // Solo el sistema/usuarios autenticados registran logs
+        allow read: if isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(get(/databases/$(database)/documents/intervenciones/$(intervencionId)).data.empresaId));
+        allow create: if isAuthenticated();
+        allow update, delete: if false; 
       }
     }
   }
