@@ -3,6 +3,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
     
+    // Helpers
     function isAuthenticated() {
       return request.auth != null;
     }
@@ -23,44 +24,48 @@ service cloud.firestore {
       return !('locked' in resource.data) || resource.data.locked == false;
     }
 
+    // Colección de Usuarios
     match /users/{userId} {
       allow read: if isAuthenticated();
-      allow write: if hasRole('admin') || hasRole('super_admin');
+      // Solo el usuario puede actualizar su foto/nombre, admins gestionan roles
+      allow write: if (request.auth.uid == userId) || hasRole('admin');
     }
 
+    // Colección de Empresas
     match /empresas/{empresaId} {
-      allow read: if isAuthenticated() && (hasRole('super_admin') || belongsToSameEmpresa(empresaId));
-      allow write: if hasRole('admin') || hasRole('super_admin');
+      allow read: if isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(empresaId));
+      allow write: if hasRole('admin');
     }
 
+    // Colección de Equipos
     match /equipos/{equipoId} {
-      allow read: if isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId);
-      allow write: if hasRole('admin') || hasRole('supervisor');
+      allow read: if isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(resource.data.empresaId));
+      allow write: if hasRole('admin');
     }
 
+    // Colección de Insumos/Químicos
     match /insumos/{insumoId} {
       allow read: if isAuthenticated();
       allow write: if hasRole('admin');
     }
 
+    // Colección de Intervenciones (Expedientes)
     match /intervenciones/{intervencionId} {
-      // Allow public access via token for clients
-      allow read: if (isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId)) || 
+      // Acceso público vía token para clientes o acceso por empresa para staff
+      allow read: if (isAuthenticated() && (hasRole('admin') || belongsToSameEmpresa(resource.data.empresaId))) || 
                      (request.query.token == resource.data.token);
       
-      allow create: if isAuthenticated() && belongsToSameEmpresa(request.resource.data.empresaId);
+      allow create: if isAuthenticated();
       
       allow update: if (
-        // Permiso para el cliente de firmar (solo puede actualizar signature y locked)
+        // Permiso para el cliente de firmar (solo puede actualizar signature, locked y closedAt)
         (request.query.token == resource.data.token && 
          request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'closedAt'])) ||
         
         // Permiso para el staff
-        (isAuthenticated() && belongsToSameEmpresa(resource.data.empresaId) && (
-          // Admins pueden editar siempre (para correcciones post-bloqueo si es necesario)
+        (isAuthenticated() && (
           hasRole('admin') || 
-          // Técnicos solo si no está bloqueado
-          (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid || hasRole('supervisor')))
+          (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid))
         ))
       );
 

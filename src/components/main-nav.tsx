@@ -33,13 +33,11 @@ import {
 } from "@/components/ui/dialog"
 import { useState } from 'react';
 import { QrScanner } from './qr-scanner';
-
-// Simulamos que el rol del usuario se obtiene de una sesión
-const userRole = 'tecnico'; // Cambiar a 'admin' o 'supervisor' para ver otras vistas
+import { useUser } from '@/firebase';
 
 const allNavItems = [
   { href: '/dashboard', label: 'Dashboard', icon: LayoutDashboard, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
-  { href: '/empresas', label: 'Empresas', icon: Building, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
+  { href: '/empresas', label: 'Empresas', icon: Building, roles: ['admin'] },
   { href: '/users', label: 'Usuarios', icon: Users, roles: ['admin', 'supervisor'] },
   { href: '/equipment', label: 'Equipos', icon: HardHat, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
   { href: '/interventions', label: 'Intervenciones', icon: Wrench, roles: ['admin', 'supervisor', 'tecnico', 'tecnico_senior'] },
@@ -52,14 +50,16 @@ const allNavItems = [
 export function MainNav() {
   const pathname = usePathname();
   const [dialogOpen, setDialogOpen] = useState(false);
+  const { profile } = useUser();
 
+  const userRole = profile?.role || 'tecnico';
   const navItems = allNavItems.filter(item => item.roles.includes(userRole));
 
   return (
     <nav className="flex flex-col h-full">
        <div className="flex items-center gap-2 h-14 border-b px-4 shrink-0">
           <Mountain className="h-8 w-8 text-primary" />
-          <span className="text-xl font-bold text-primary-foreground">MaintWise</span>
+          <span className="text-xl font-bold text-primary">MaintWise</span>
         </div>
 
       <div className="flex-1 overflow-y-auto">

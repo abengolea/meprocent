@@ -1,54 +1,57 @@
 
+'use client';
 
-import type { Metadata } from "next";
 import { Suspense } from "react";
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
 import { Skeleton } from "@/components/ui/skeleton";
-import { mockUsers, getIntervenciones } from "@/lib/mock-data";
-import { User, Intervencion } from "@/lib/types";
+import { useUser, useCollection, useFirestore } from "@/firebase";
+import { collection, query, where, orderBy } from "firebase/firestore";
 import { DashboardTecnico } from "@/components/tecnico/dashboard-tecnico";
-
-export const metadata: Metadata = {
-    title: "Dashboard | MaintWise",
-    description: "Visión general de sus tareas y alarmas.",
-};
-
-const userRole = 'tecnico'; 
-
-const getCurrentUser = (): User => {
-    if (userRole === 'admin') return mockUsers[0];
-    if (userRole === 'supervisor') return mockUsers[1];
-    return mockUsers.find(u => u.role === 'tecnico')!; // Aseguramos que sea un técnico
-}
+import { Intervencion } from "@/lib/types";
+import { StatsCards } from "@/components/dashboard/stats-cards";
+import { RecentAlarms } from "@/components/dashboard/recent-alarms";
+import { RecentInterventions } from "@/components/dashboard/recent-interventions";
 
 export default function DashboardPage() {
-    const user = getCurrentUser();
+    const { profile, loading: userLoading } = useUser();
+    const db = useFirestore();
 
-    // Vistas para otros roles
-    if (user.role === 'admin' || user.role === 'supervisor') {
+    // Query para intervenciones (si es técnico, solo las suyas)
+    const interventionsQuery = profile?.role === 'admin' 
+        ? query(collection(db, "intervenciones"), orderBy("fechaInicio", "desc"))
+        : query(collection(db, "intervenciones"), where("tecnicoId", "==", profile?.id || ""), orderBy("fechaInicio", "desc"));
+
+    const { data: intervenciones, loading: dataLoading } = useCollection<Intervencion>(db ? interventionsQuery : null);
+
+    if (userLoading) return <DashboardSkeleton />;
+    if (!profile) return <div>Inicie sesión para continuar.</div>;
+
+    // Vista para Admin/Supervisor
+    if (profile.role === 'admin' || profile.role === 'supervisor') {
         return (
              <div className="flex flex-col gap-6">
                 <header>
-                    <h1 className="text-3xl font-bold tracking-tight">Dashboard del Administrador</h1>
+                    <h1 className="text-3xl font-bold tracking-tight">Dashboard Administrativo</h1>
                     <p className="text-muted-foreground">
-                        Visión general de las métricas y estado del sistema.
+                        Métricas de mantenimiento y control de plagas.
                     </p>
                 </header>
+                
+                <div className="grid grid-cols-1 gap-6">
+                    {/* Aquí irían más componentes de métricas reales */}
+                    <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <RecentInterventions intervenciones={intervenciones || []} />
+                        <RecentAlarms alarms={[]} /> {/* TODO: Conectar a Firestore */}
+                    </div>
+                </div>
             </div>
         );
     }
     
     // Dashboard del Técnico
     return (
-        <Suspense fallback={<DashboardSkeleton />}>
-            <DashboardTecnicoLoader user={user} />
-        </Suspense>
+        <DashboardTecnico user={profile} intervenciones={intervenciones || []} />
     );
-}
-
-async function DashboardTecnicoLoader({ user }: { user: User }) {
-    const intervenciones = await getIntervenciones(); 
-    return <DashboardTecnico user={user} intervenciones={intervenciones} />;
 }
 
 const DashboardSkeleton = () => (
@@ -57,20 +60,10 @@ const DashboardSkeleton = () => (
             <Skeleton className="h-8 w-48" />
             <Skeleton className="h-4 w-64" />
         </div>
-        <Card>
-            <CardHeader>
-                <Skeleton className="h-6 w-40" />
-            </CardHeader>
-            <CardContent className="flex justify-around">
-                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
-                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
-                <div className="text-center"><Skeleton className="h-8 w-10 mx-auto" /><Skeleton className="h-4 w-16 mt-2" /></div>
-            </CardContent>
-        </Card>
-        <Skeleton className="h-20 w-full" />
-        <div className="space-y-4">
-             <Skeleton className="h-6 w-48" />
-             <Skeleton className="h-24 w-full" />
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
+            <Skeleton className="h-32 w-full" />
         </div>
     </div>
 );

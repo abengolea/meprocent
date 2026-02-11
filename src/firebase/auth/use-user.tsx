@@ -1,12 +1,17 @@
+
 'use client';
 
 import { useEffect, useState } from 'react';
-import { onAuthStateChanged, User } from 'firebase/auth';
-import { useAuth } from '../provider';
+import { onAuthStateChanged, User as FirebaseUser } from 'firebase/auth';
+import { doc, onSnapshot } from 'firebase/firestore';
+import { useAuth, useFirestore } from '../provider';
+import type { User as UserProfile } from '@/lib/types';
 
 export function useUser() {
   const auth = useAuth();
-  const [user, setUser] = useState<User | null>(null);
+  const db = useFirestore();
+  const [user, setUser] = useState<FirebaseUser | null>(null);
+  const [profile, setProfile] = useState<UserProfile | null>(null);
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
@@ -14,11 +19,34 @@ export function useUser() {
       setLoading(false);
       return;
     }
-    return onAuthStateChanged(auth, (user) => {
-      setUser(user);
-      setLoading(false);
+
+    const unsubscribeAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      if (!firebaseUser) {
+        setProfile(null);
+        setLoading(false);
+      }
     });
+
+    return () => unsubscribeAuth();
   }, [auth]);
 
-  return { user, loading };
+  useEffect(() => {
+    if (!user || !db) return;
+
+    const userRef = doc(db, 'users', user.uid);
+    const unsubscribeProfile = onSnapshot(userRef, (docSnap) => {
+      if (docSnap.exists()) {
+        setProfile(docSnap.data() as UserProfile);
+      }
+      setLoading(false);
+    }, (err) => {
+      console.error("Error fetching profile:", err);
+      setLoading(false);
+    });
+
+    return () => unsubscribeProfile();
+  }, [user, db]);
+
+  return { user, profile, loading };
 }
