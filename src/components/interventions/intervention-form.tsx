@@ -1,4 +1,3 @@
-
 "use client";
 
 import { useForm } from "react-hook-form";
@@ -27,8 +26,9 @@ import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Loader2, Wrench, Bug, FileText, CheckCircle2 } from "lucide-react";
-import { getAlarmById, getEquipoById, mockUsers } from "@/lib/mock-data";
-import type { Intervencion, Equipo, VerticalType } from "@/lib/types";
+import { useFirestore, useUser } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import type { Intervencion, Equipo } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
 import { SignaturePad } from "./signature-pad";
@@ -56,13 +56,13 @@ interface InterventionFormProps {
 export function InterventionForm({ intervention, alarmId, equipoId: initialEquipoId }: InterventionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const db = useFirestore();
+  const { profile } = useUser();
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState<Equipo | null>(null);
   const [step, setStep] = useState<'vertical' | 'form' | 'sign'>(intervention ? 'form' : 'vertical');
   const [signature, setSignature] = useState<string | null>(null);
   const [isClosing, setIsClosing] = useState(false);
-  
-  const tecnicos = mockUsers.filter(u => u.role === 'tecnico' || u.role === 'tecnico_senior');
 
   const form = useForm<InterventionFormValues>({
     resolver: zodResolver(interventionFormSchema),
@@ -71,56 +71,68 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
       prioridad: 'normal',
       tipoIntervencion: 'correctivo',
       trabajoRealizado: '',
+      tecnicoAsignadoId: profile?.id || '',
     },
   });
 
   useEffect(() => {
     async function fetchData() {
+      if (!db) return;
       setLoading(true);
       let targetEquipoId = initialEquipoId;
       
-      if (alarmId) {
-        const alarm = await getAlarmById(alarmId);
-        if (alarm) {
-          form.setValue('problemaDetectado', alarm.mensaje);
-          form.setValue('prioridad', alarm.severidad === 'critica' || alarm.severidad === 'alta' ? 'urgente' : 'normal');
-          if (!targetEquipoId) targetEquipoId = alarm.equipoId;
+      if (initialEquipoId) {
+        const equipoDoc = await getDoc(doc(db, 'equipos', initialEquipoId));
+        if (equipoDoc.exists()) {
+          const eqData = equipoDoc.data() as Equipo;
+          setEquipo({ ...eqData, id: equipoDoc.id });
+          form.setValue('equipoId', equipoDoc.id);
           setStep('form');
-        }
-      }
-
-      if (targetEquipoId) {
-        const fetchedEquipo = await getEquipoById(targetEquipoId);
-        if (fetchedEquipo) {
-            setEquipo(fetchedEquipo as any);
-            form.setValue('equipoId', fetchedEquipo.id);
         }
       }
       setLoading(false);
     }
     fetchData();
-  }, [alarmId, initialEquipoId, form]);
+  }, [db, initialEquipoId, form]);
 
-  const onSubmit = (data: InterventionFormValues) => {
-    setStep('sign');
-  };
-
-  const handleFinalize = async (signerName: string, dni: string) => {
-    if (!signature) {
-      toast({ variant: "destructive", title: "Firma requerida", description: "El encargado debe firmar para cerrar la orden." });
-      return;
-    }
+  const onSubmit = async (data: InterventionFormValues) => {
+    if (!db || !profile || !equipo) return;
 
     setIsClosing(true);
-    // Simulación de guardado y generación de PDF
-    await new Promise(resolve => setTimeout(resolve, 2000));
-    
-    toast({
-      title: "Orden Cerrada",
-      description: "La orden ha sido bloqueada y el PDF se ha generado correctamente.",
-    });
-    
-    router.push("/interventions");
+    try {
+      const docData: Omit<Intervencion, 'id'> = {
+        vertical: data.vertical,
+        locked: false,
+        token: Math.random().toString(36).substring(2, 15),
+        numeroIntervencion: `INT-${Date.now().toString().slice(-6)}`,
+        equipoId: equipo.id,
+        equipoSnapshot: {
+          codigoInterno: equipo.codigoInterno,
+          descripcion: equipo.descripcion,
+          ubicacion: `${equipo.ubicacion.planta} - ${equipo.ubicacion.sector}`,
+        },
+        tipoIntervencion: data.tipoIntervencion,
+        tecnicoId: profile.id,
+        tecnicoSnapshot: {
+          displayName: profile.displayName,
+          email: profile.email,
+        },
+        estado: 'en_progreso',
+        empresaId: profile.empresaId,
+        trabajoRealizado: data.trabajoRealizado,
+        fechaInicio: serverTimestamp() as any,
+      };
+
+      await addDoc(collection(db, 'intervenciones'), docData);
+      
+      toast({ title: "Éxito", description: "Intervención creada correctamente en Firestore." });
+      router.push("/interventions");
+    } catch (e) {
+      console.error(e);
+      toast({ variant: "destructive", title: "Error", description: "No se pudo guardar la intervención." });
+    } finally {
+      setIsClosing(false);
+    }
   };
 
   if (loading) return <div className="space-y-4"><Skeleton className="h-20 w-full" /><Skeleton className="h-64 w-full" /></div>;
@@ -143,41 +155,6 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
           </CardHeader>
         </Card>
       </div>
-    );
-  }
-
-  if (step === 'sign') {
-    return (
-      <Card>
-        <CardHeader>
-          <CardTitle>Cierre y Firma</CardTitle>
-          <p className="text-sm text-muted-foreground">Una vez firmada, la orden no podrá ser editada.</p>
-        </CardHeader>
-        <CardContent className="space-y-6">
-          <div className="space-y-2">
-            <label className="text-sm font-medium">Nombre del Encargado</label>
-            <Input id="signerName" placeholder="Juan Pérez" />
-          </div>
-          <div className="space-y-2">
-            <label className="text-sm font-medium">DNI / ID</label>
-            <Input id="signerDni" placeholder="12.345.678" />
-          </div>
-          <SignaturePad onSave={setSignature} onClear={() => setSignature(null)} />
-          {signature && <p className="text-xs text-green-600 flex items-center"><CheckCircle2 className="w-4 h-4 mr-1"/> Firma capturada</p>}
-          <Button 
-            className="w-full" 
-            disabled={!signature || isClosing} 
-            onClick={() => {
-              const name = (document.getElementById('signerName') as HTMLInputElement).value;
-              const dni = (document.getElementById('signerDni') as HTMLInputElement).value;
-              handleFinalize(name, dni);
-            }}
-          >
-            {isClosing ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <FileText className="w-4 h-4 mr-2" />}
-            Finalizar y Generar Informe PDF
-          </Button>
-        </CardContent>
-      </Card>
     );
   }
 
@@ -234,53 +211,13 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
             render={({ field }) => (
               <FormItem>
                 <FormLabel>Técnico</FormLabel>
-                <Select onValueChange={field.onChange} defaultValue={field.value}>
-                  <FormControl><SelectTrigger><SelectValue placeholder="Asignar" /></SelectTrigger></FormControl>
-                  <SelectContent>
-                    {tecnicos.map(t => <SelectItem key={t.id} value={t.id}>{t.displayName}</SelectItem>)}
-                  </SelectContent>
-                </Select>
+                <FormControl><Input {...field} disabled value={profile?.displayName || ''} /></FormControl>
                 <FormMessage />
               </FormItem>
             )}
           />
         </div>
 
-        {isPestControl && (
-          <Card className="bg-muted/30">
-            <CardHeader><CardTitle className="text-sm">Tratamiento Químico</CardTitle></CardHeader>
-            <CardContent className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <FormField
-                control={form.control}
-                name="chemicalUsed"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Producto / Químico</FormLabel>
-                    <Select onValueChange={field.onChange}>
-                       <FormControl><SelectTrigger><SelectValue placeholder="Seleccione producto" /></SelectTrigger></FormControl>
-                       <SelectContent>
-                          <SelectItem value="gel_cuca">Gel Cucarachicida Max</SelectItem>
-                          <SelectItem value="deltametrina">Deltametrina 2.5%</SelectItem>
-                          <SelectItem value="bromadiolona">Bromadiolona (Bloques)</SelectItem>
-                       </SelectContent>
-                    </Select>
-                  </FormItem>
-                )}
-              />
-              <FormField
-                control={form.control}
-                name="chemicalQty"
-                render={({ field }) => (
-                  <FormItem>
-                    <FormLabel>Dosis / Cantidad</FormLabel>
-                    <Input placeholder="Ej: 500ml / 5gr" {...field} />
-                  </FormItem>
-                )}
-              />
-            </CardContent>
-          </Card>
-        )}
-        
         <FormField
             control={form.control}
             name="trabajoRealizado"
@@ -294,8 +231,11 @@ export function InterventionForm({ intervention, alarmId, equipoId: initialEquip
         />
 
         <div className="flex justify-between gap-2">
-          <Button type="button" variant="outline" onClick={() => setStep('vertical')}>Cambiar Vertical</Button>
-          <Button type="submit">Continuar a Firma</Button>
+          <Button type="button" variant="outline" onClick={() => setStep('vertical')} disabled={isClosing}>Cambiar Vertical</Button>
+          <Button type="submit" disabled={isClosing}>
+            {isClosing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+            Guardar Intervención
+          </Button>
         </div>
       </form>
     </Form>

@@ -1,4 +1,3 @@
-
 import { Timestamp } from 'firebase/firestore';
 
 export type VerticalType = 'maintenance' | 'pest_control';
@@ -11,11 +10,21 @@ export interface User {
   empresaId: string;
   activo: boolean;
   photoURL?: string;
+  createdAt?: Date | Timestamp;
+  lastLoginAt?: Date | Timestamp;
+}
+
+export interface Empresa {
+  id: string;
+  razonSocial: string;
+  nombreComercial?: string;
+  cuit?: string;
+  activa: boolean;
 }
 
 export interface Insumo {
   id: string;
-  internalCode: string;
+  internalCode: string; // Ej: M01
   type: 'chemical' | 'material' | 'spare_part';
   name: string;
   activeIngredient?: string;
@@ -64,7 +73,7 @@ export interface Equipo {
 export type EstadoIntervencion = 'asignada' | 'en_progreso' | 'pausada' | 'completada_tecnico' | 'aprobada' | 'cerrada';
 
 export interface Intervencion {
-  id: string;
+  id?: string;
   vertical: VerticalType;
   locked: boolean;
   token?: string;
@@ -74,14 +83,14 @@ export interface Intervencion {
   solicitante?: string;
   descripcionProblema?: string;
   equipoId: string;
-  equipoSnapshot?: {
+  equipoSnapshot: {
     codigoInterno: string;
     descripcion: string;
     ubicacion: string;
   };
   tipoIntervencion: string;
   tecnicoId: string;
-  tecnicoSnapshot?: {
+  tecnicoSnapshot: {
     displayName: string;
     email: string;
   };
