@@ -1,3 +1,7 @@
+/**
+ * @fileoverview Datos simulados para desarrollo.
+ * TODO: Migrar estas funciones a llamadas reales de Firestore (Paso 5 del plan de migración).
+ */
 
 import { Alarma, Equipo, Intervencion, PlanMantenimiento, User, Empresa, Insumo } from '@/lib/types';
 import { subDays, subHours } from 'date-fns';
@@ -18,8 +22,7 @@ export const mockUsers: User[] = [
     role: 'admin',
     empresaId: 'empresa-1',
     activo: true,
-    photoURL: 'https://picsum.photos/seed/user1/100/100',
-    metadata: { createdAt: subDays(now, 365), updatedAt: subDays(now, 1), createdBy: 'user-1' },
+    photoURL: 'https://picsum.photos/seed/user1/100/100'
   },
   {
     id: 'user-3',
@@ -28,8 +31,7 @@ export const mockUsers: User[] = [
     role: 'tecnico',
     empresaId: 'empresa-1',
     activo: true,
-    photoURL: 'https://picsum.photos/seed/user3/100/100',
-    metadata: { createdAt: subDays(now, 150), updatedAt: subDays(now, 3), createdBy: 'user-2' },
+    photoURL: 'https://picsum.photos/seed/user3/100/100'
   },
 ];
 
@@ -70,9 +72,7 @@ export const mockIntervenciones: Intervencion[] = [
     tecnicoId: 'user-3',
     tecnicoSnapshot: { displayName: 'Juan Técnico', email: 'tech@maintwise.com' },
     estado: 'en_progreso',
-    tiempos: { asignado: subHours(now, 4) },
     empresaId: 'empresa-1',
-    estadoCierre: 'abierta',
     trabajoRealizado: 'Se procede a aplicar gel en zócalos y aberturas.',
     fechaInicio: subHours(now, 2),
     consumptions: [
@@ -85,6 +85,7 @@ export const mockEmpresas: Empresa[] = [
     { id: 'empresa-1', razonSocial: 'Mi Empresa S.A.', nombreComercial: 'MaintWise Demo', activa: true }
 ];
 
+// TODO: Reemplazar estas funciones por llamadas reales a Firestore
 export const getInsumos = async () => mockInsumos;
 export const getAlarms = async () => [];
 export const getAlarmById = async (id: string) => undefined;
@@ -95,3 +96,7 @@ export const getIntervencionById = async (id: string) => mockIntervenciones.find
 export const getPlanes = async () => [];
 export const getEmpresas = async () => mockEmpresas;
 export const getEmpresaById = async (id: string) => mockEmpresas.find(e => e.id === id);
+export const getLecturasByEquipoId = async (id: string) => [];
+export const getIntervencionesByEmpresaId = async (id: string) => mockIntervenciones;
+export const getEquiposByEmpresaId = async (id: string) => mockEquipos;
+export const getIntervencionesByEquipoId = async (id: string) => mockIntervenciones;
