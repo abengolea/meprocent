@@ -5,7 +5,7 @@ import { useRouter } from 'next/navigation';
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import * as z from 'zod';
-import { Mountain, Loader2 } from 'lucide-react';
+import { Mountain, Loader2, AlertCircle } from 'lucide-react';
 
 import { Button } from '@/components/ui/button';
 import {
@@ -26,6 +26,7 @@ import {
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
 import { signInEmail, signInGoogle } from '@/lib/auth';
+import { Alert, AlertDescription, AlertTitle } from '@/components/ui/alert';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor ingrese un correo válido.' }),
@@ -36,6 +37,7 @@ export default function LoginPage() {
   const router = useRouter();
   const { toast } = useToast();
   const [loading, setLoading] = React.useState(false);
+  const [authError, setAuthError] = React.useState<string | null>(null);
 
   const form = useForm<z.infer<typeof loginSchema>>({
     resolver: zodResolver(loginSchema),
@@ -45,8 +47,31 @@ export default function LoginPage() {
     },
   });
 
+  const handleFirebaseError = (error: any) => {
+    console.error('Error de Firebase:', error);
+    let message = 'Ocurrió un error inesperado.';
+    
+    if (error.code === 'auth/unauthorized-domain') {
+      setAuthError('dominio_no_autorizado');
+      message = 'Este dominio no está autorizado en la consola de Firebase.';
+    } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
+      message = 'Email o contraseña incorrectos.';
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      message = 'La ventana de inicio de sesión fue cerrada.';
+    } else {
+      message = error.message || 'No se pudo iniciar sesión.';
+    }
+
+    toast({
+      variant: 'destructive',
+      title: 'Error de Inicio de Sesión',
+      description: message,
+    });
+  };
+
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
+    setAuthError(null);
     try {
       await signInEmail(values.email, values.password);
       toast({
@@ -55,19 +80,7 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Error de login:', error);
-      let message = 'Credenciales inválidas.';
-      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
-        message = 'Email o contraseña incorrectos.';
-      } else if (error.code === 'auth/invalid-api-key') {
-        message = 'Error de configuración de Firebase.';
-      }
-      
-      toast({
-        variant: 'destructive',
-        title: 'Error de Inicio de Sesión',
-        description: message,
-      });
+      handleFirebaseError(error);
     } finally {
       setLoading(false);
     }
@@ -75,6 +88,7 @@ export default function LoginPage() {
   
   const handleGoogleLogin = async () => {
     setLoading(true);
+    setAuthError(null);
     try {
       await signInGoogle();
       toast({
@@ -83,12 +97,7 @@ export default function LoginPage() {
       });
       router.push('/dashboard');
     } catch (error: any) {
-      console.error('Error de Google Login:', error);
-      toast({
-        variant: 'destructive',
-        title: 'Error de Inicio de Sesión',
-        description: error.message || 'No se pudo iniciar sesión con Google.',
-      });
+      handleFirebaseError(error);
     } finally {
       setLoading(false);
     }
@@ -107,7 +116,17 @@ export default function LoginPage() {
             Ingrese sus credenciales para acceder al sistema.
           </CardDescription>
         </CardHeader>
-        <CardContent>
+        <CardContent className="space-y-4">
+          {authError === 'dominio_no_autorizado' && (
+            <Alert variant="destructive">
+              <AlertCircle className="h-4 w-4" />
+              <AlertTitle>Dominio no autorizado</AlertTitle>
+              <AlertDescription className="text-xs">
+                Debes agregar este dominio a la lista de "Dominios autorizados" en la consola de Firebase (Authentication > Settings).
+              </AlertDescription>
+            </Alert>
+          )}
+
           <Form {...form}>
             <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
               <FormField
