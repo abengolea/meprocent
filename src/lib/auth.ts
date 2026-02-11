@@ -20,7 +20,7 @@ const { auth, firestore } = initializeFirebase();
  * Sincroniza el perfil de usuario de Auth con la colección 'users' en Firestore.
  */
 async function syncUserProfile(user: FirebaseUser, displayName?: string) {
-  if (!user) return;
+  if (!user || !firestore) return;
 
   const userRef = doc(firestore, 'users', user.uid);
   
@@ -33,46 +33,49 @@ async function syncUserProfile(user: FirebaseUser, displayName?: string) {
     photoURL: user.photoURL || '',
     lastLoginAt: serverTimestamp(),
     // Campos por defecto para nuevos usuarios
-    active: true,
+    activo: true,
     createdAt: serverTimestamp(),
   }, { merge: true });
-
-  // Nota: El rol se gestionará en el Paso 4. 
-  // Por ahora, si no tiene rol, asignamos 'cliente' por defecto según el requerimiento.
 }
 
 export async function signUpEmail(email: string, password: string, displayName?: string) {
+  if (!auth) throw new Error('Firebase Auth not initialized');
   const userCredential = await createUserWithEmailAndPassword(auth, email, password);
   await syncUserProfile(userCredential.user, displayName);
   
-  const userRef = doc(firestore, 'users', userCredential.user.uid);
-  await setDoc(userRef, { role: 'cliente' }, { merge: true });
+  // Asignamos rol por defecto si es nuevo
+  const userRef = doc(firestore!, 'users', userCredential.user.uid);
+  await setDoc(userRef, { role: 'cliente', empresaId: 'default' }, { merge: true });
   
   return userCredential.user;
 }
 
 export async function signInEmail(email: string, password: string) {
+  if (!auth) throw new Error('Firebase Auth not initialized');
   const userCredential = await signInWithEmailAndPassword(auth, email, password);
   await syncUserProfile(userCredential.user);
   return userCredential.user;
 }
 
 export async function signInGoogle() {
+  if (!auth) throw new Error('Firebase Auth not initialized');
   const provider = new GoogleAuthProvider();
   const userCredential = await signInWithPopup(auth, provider);
   await syncUserProfile(userCredential.user);
   
-  // Asignamos rol por defecto si es nuevo
-  const userRef = doc(firestore, 'users', userCredential.user.uid);
-  await setDoc(userRef, { role: 'cliente' }, { merge: true });
+  // Verificamos si ya tiene rol, si no, asignamos 'cliente'
+  const userRef = doc(firestore!, 'users', userCredential.user.uid);
+  await setDoc(userRef, { role: 'cliente', empresaId: 'default' }, { merge: true });
   
   return userCredential.user;
 }
 
 export async function signOutUser() {
+  if (!auth) return;
   return await signOut(auth);
 }
 
 export function onAuthChanged(callback: (user: FirebaseUser | null) => void) {
+  if (!auth) return () => {};
   return onAuthStateChanged(auth, callback);
 }

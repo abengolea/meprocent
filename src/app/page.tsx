@@ -60,7 +60,7 @@ export default function LoginPage() {
       if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
         message = 'Email o contraseña incorrectos.';
       } else if (error.code === 'auth/invalid-api-key') {
-        message = 'Error de configuración: API Key de Firebase no válida o faltante en .env';
+        message = 'Error de configuración de Firebase.';
       }
       
       toast({
