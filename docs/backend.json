@@ -30,7 +30,7 @@
     },
     "Equipo": {
       "title": "Equipo",
-      "description": "Represents a piece of equipment to be maintained or a trap for pest control.",
+      "description": "Represents a piece of equipment or a trap for pest control.",
       "type": "object",
       "properties": {
         "id": { "type": "string" },
@@ -62,6 +62,19 @@
         "registration": { "type": "string" },
         "toxicity": { "type": "string" },
         "msdsUrl": { "type": "string", "format": "uri" }
+      },
+      "required": ["id", "internalCode", "name", "type"]
+    },
+    "AuditLog": {
+      "title": "AuditLog",
+      "description": "Records every relevant action on an intervention.",
+      "type": "object",
+      "properties": {
+        "timestamp": { "type": "string", "format": "date-time" },
+        "userId": { "type": "string" },
+        "userName": { "type": "string" },
+        "action": { "type": "string" },
+        "changes": { "type": "object" }
       }
     },
     "Intervencion": {
@@ -113,7 +126,7 @@
     }
   },
   "auth": {
-    "providers": ["email"]
+    "providers": ["email", "google"]
   },
   "firestore": {
     "/users/{userId}": {
@@ -134,7 +147,11 @@
     },
     "/intervenciones/{intervencionId}": {
       "schema": { "$ref": "#/entities/Intervencion" },
-      "description": "Stores records of interventions (Maintenance or Pest Control)."
+      "description": "Stores records of interventions."
+    },
+    "/intervenciones/{intervencionId}/audit/{auditId}": {
+      "schema": { "$ref": "#/entities/AuditLog" },
+      "description": "Immutable history of changes for the intervention."
     }
   }
 }

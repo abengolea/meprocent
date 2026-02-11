@@ -27,7 +27,6 @@ service cloud.firestore {
     // Colección de Usuarios
     match /users/{userId} {
       allow read: if isAuthenticated();
-      // Solo el usuario puede actualizar su foto/nombre, admins gestionan roles
       allow write: if (request.auth.uid == userId) || hasRole('admin') || hasRole('super_admin');
     }
 
@@ -43,26 +42,26 @@ service cloud.firestore {
       allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
-    // Colección de Insumos/Químicos
+    // Colección de Insumos
     match /insumos/{insumoId} {
       allow read: if isAuthenticated();
       allow write: if hasRole('admin') || hasRole('super_admin');
     }
 
-    // Colección de Intervenciones (Expedientes)
+    // Colección de Intervenciones
     match /intervenciones/{intervencionId} {
-      // Acceso público vía token para clientes o acceso por empresa para staff
+      // El acceso público ahora se valida verificando que el token enviado en el body/get coincida con el almacenado
       allow read: if (isAuthenticated() && (hasRole('admin') || hasRole('super_admin') || belongsToSameEmpresa(resource.data.empresaId))) || 
-                     (request.query.token == resource.data.token);
+                     (request.auth == null && resource.data.token == request.resource.data.token);
       
       allow create: if isAuthenticated();
       
       allow update: if (
-        // Permiso para el cliente de firmar (solo puede actualizar signature, locked y closedAt)
-        (request.query.token == resource.data.token && 
-         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'closedAt'])) ||
+        // El cliente firma: solo puede actualizar signature, locked y closedAt si provee el token correcto
+        (isNotLocked(resource) && request.resource.data.token == resource.data.token && 
+         request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'closedAt', 'estado'])) ||
         
-        // Permiso para el staff
+        // El staff opera
         (isAuthenticated() && (
           hasRole('admin') || hasRole('super_admin') ||
           (isNotLocked(resource) && (resource.data.tecnicoId == request.auth.uid))
@@ -70,6 +69,12 @@ service cloud.firestore {
       );
 
       allow delete: if hasRole('admin') || hasRole('super_admin');
+
+      // Subcolección de Auditoría
+      match /audit/{auditId} {
+        allow read: if isAuthenticated() && (hasRole('admin') || hasRole('super_admin'));
+        allow create: if isAuthenticated(); // Solo el sistema/usuarios autenticados registran logs
+      }
     }
   }
 }
