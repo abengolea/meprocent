@@ -25,6 +25,7 @@ import {
 } from '@/components/ui/form';
 import { Input } from '@/components/ui/input';
 import { useToast } from '@/hooks/use-toast';
+import { signInEmail, signInGoogle } from '@/lib/auth';
 
 const loginSchema = z.object({
   email: z.string().email({ message: 'Por favor ingrese un correo válido.' }),
@@ -46,27 +47,51 @@ export default function LoginPage() {
 
   const onSubmit = async (values: z.infer<typeof loginSchema>) => {
     setLoading(true);
-    // Simulate API call
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-
-    // Simulate success
-    toast({
-      title: 'Inicio de Sesión Exitoso',
-      description: 'Bienvenido a MaintWise.',
-    });
-    router.push('/dashboard');
-    setLoading(false);
+    try {
+      await signInEmail(values.email, values.password);
+      toast({
+        title: 'Inicio de Sesión Exitoso',
+        description: 'Bienvenido a MaintWise.',
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Error de login:', error);
+      let message = 'Credenciales inválidas.';
+      if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password') {
+        message = 'Email o contraseña incorrectos.';
+      } else if (error.code === 'auth/invalid-api-key') {
+        message = 'Error de configuración: API Key de Firebase no válida o faltante en .env';
+      }
+      
+      toast({
+        variant: 'destructive',
+        title: 'Error de Inicio de Sesión',
+        description: message,
+      });
+    } finally {
+      setLoading(false);
+    }
   };
   
   const handleGoogleLogin = async () => {
     setLoading(true);
-    await new Promise((resolve) => setTimeout(resolve, 1500));
-    toast({
-      title: 'Inicio de Sesión Exitoso',
-      description: 'Bienvenido a MaintWise.',
-    });
-    router.push('/dashboard');
-    setLoading(false);
+    try {
+      await signInGoogle();
+      toast({
+        title: 'Inicio de Sesión Exitoso',
+        description: 'Bienvenido a MaintWise.',
+      });
+      router.push('/dashboard');
+    } catch (error: any) {
+      console.error('Error de Google Login:', error);
+      toast({
+        variant: 'destructive',
+        title: 'Error de Inicio de Sesión',
+        description: error.message || 'No se pudo iniciar sesión con Google.',
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (
