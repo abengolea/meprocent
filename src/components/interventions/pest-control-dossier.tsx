@@ -10,7 +10,6 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Intervencion, Insumo } from "@/lib/types";
-import { SignaturePad } from "./signature-pad";
 import { useFirestore, useUser } from "@/firebase";
 import { doc, updateDoc, serverTimestamp, collection, getDocs, query, where } from "firebase/firestore";
 import { writeAuditLog } from "@/lib/audit";
@@ -25,12 +24,10 @@ import {
     Save,
     Loader2,
     Plus,
-    FileText,
     Download,
     ExternalLink
 } from "lucide-react";
 import { formatDate } from "@/lib/utils";
-import Link from "next/link";
 
 interface PestControlDossierProps {
     intervencion: Intervencion & { id: string };
@@ -44,7 +41,6 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
     const [activeTab, setActiveTab] = React.useState("solicitud");
     const [isSaving, setIsSaving] = React.useState(false);
     const [insumos, setInsumos] = React.useState<Insumo[]>([]);
-    const [signature, setSignature] = React.useState<string | null>(intervencion.signature?.image || null);
 
     const isLocked = intervencion.locked === true;
 
