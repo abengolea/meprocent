@@ -1,3 +1,4 @@
+
 "use client";
 
 import * as React from "react";
@@ -17,7 +18,7 @@ import {
     ClipboardList, 
     Play, 
     FlaskConical, 
-    Image as ImageIcon, 
+    ImageIcon, 
     CheckCircle2, 
     User, 
     Lock,
@@ -248,7 +249,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                             
                             {isLocked ? (
                                 <div className="border rounded-md p-6 bg-green-50/50 flex flex-col items-center border-green-200">
-                                    <img src={intervencion.signature?.image || ""} alt="Firma" className="max-h-32 mb-4" />
+                                    {intervencion.signature?.image && <img src={intervencion.signature.image} alt="Firma" className="max-h-32 mb-4" />}
                                     <div className="text-center text-xs text-green-700">
                                         <p className="font-bold uppercase tracking-widest">Documento Certificado Digitalmente</p>
                                         <p>Finalizado el {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>

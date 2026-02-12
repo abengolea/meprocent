@@ -34,7 +34,7 @@ service cloud.firestore {
 
     // --- REGLAS POR COLECCIÓN ---
 
-    // Usuarios: Evitar fuga de datos y auto-escalado de privilegios
+    // Usuarios: Privacidad estricta
     match /users/{userId} {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
@@ -42,12 +42,11 @@ service cloud.firestore {
         (hasRole('admin') && userDoc().empresaId == resource.data.empresaId)
       );
       
-      // El usuario solo puede actualizar campos básicos, no su rol ni empresa
+      // Bloqueo de auto-escalado de privilegios
       allow update: if isSignedIn() && request.auth.uid == userId 
         && request.resource.data.role == resource.data.role
         && request.resource.data.empresaId == resource.data.empresaId;
         
-      // Solo admins pueden crear o gestionar roles
       allow create, update: if isSignedIn() && (hasRole('admin') || isSuperAdmin());
       allow delete: if false;
     }
@@ -64,27 +63,27 @@ service cloud.firestore {
     }
 
     match /insumos/{insumoId} {
-      // Insumos pueden ser globales o por empresa
       allow read: if isSignedIn();
       allow write: if hasRole('admin') || isSuperAdmin();
     }
 
     match /intervenciones/{id} {
-      allow read: if isSignedIn() && inCompany(resource.data.empresaId);
+      // Permitir GET público para el portal de firma (validación por token ocurre en el cliente)
+      allow get: if true;
+      
+      allow list: if isSignedIn() && inCompany(resource.data.empresaId);
       
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
       
-      allow update: if isSignedIn() 
-        && inCompany(resource.data.empresaId) 
-        && isNotLocked(id);
+      allow update: if (isSignedIn() && inCompany(resource.data.empresaId) && isNotLocked(id))
+                    || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'estado', 'closedAt']));
 
-      // Integridad referencial: no se borran intervenciones certificadas
-      allow delete: if isSuperAdmin() && isNotLocked(id);
+      allow delete: if false;
 
-      // Subcolección de Auditoría: Inmutable y restringida a la empresa
+      // Subcolección de Auditoría: Inmutable y restringida
       match /audit/{auditId} {
         allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
-        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
+        allow create: if (isSignedIn() && inCompany(interventionDoc(id).empresaId)) || true; // Permitir log de firma pública
         allow update, delete: if false; 
       }
 
@@ -98,11 +97,11 @@ service cloud.firestore {
       // Firmas de Certificación
       match /signatures/{sigId} {
         allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
-        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId) && isNotLocked(id);
+        allow create: if isNotLocked(id);
         allow update, delete: if false;
       }
 
-      // Consumos de Químicos (Subcolección para trazabilidad detallada)
+      // Consumos
       match /consumptions/{cId} {
         allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
         allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId) && isNotLocked(id);

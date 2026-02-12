@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -27,7 +28,7 @@ export default function PublicInterventionPage() {
   const [signerName, setSignerName] = React.useState('');
   const [signerDni, setSignerDni] = React.useState('');
   const [signature, setSignature] = React.useState<string | null>(null);
-  const [isSubmitting, setIsSignining] = React.useState(false);
+  const [isSubmitting, setIsSubmitting] = React.useState(false);
 
   const docRef = React.useMemo(() => (db && id ? doc(db, 'intervenciones', id) : null), [db, id]);
   const { data: intervencion, loading } = useDoc<Intervencion>(docRef);
@@ -50,7 +51,7 @@ export default function PublicInterventionPage() {
       return;
     }
 
-    setIsSignining(true);
+    setIsSubmitting(true);
     try {
       await updateDoc(doc(db, 'intervenciones', id), {
         signature: {
@@ -77,7 +78,7 @@ export default function PublicInterventionPage() {
     } catch (e) {
       toast({ variant: 'destructive', title: 'Error', description: 'No se pudo procesar la firma.' });
     } finally {
-      setIsSignining(false);
+      setIsSubmitting(false);
     }
   };
 

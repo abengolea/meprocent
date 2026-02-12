@@ -28,7 +28,7 @@ import { useRouter } from "next/navigation";
 import { useState, useEffect } from "react";
 import { Loader2, Wrench, Bug, FileText, Lock } from "lucide-react";
 import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc } from "firebase/firestore";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "firebase/firestore";
 import { writeAuditLog } from "@/lib/audit";
 import type { Intervencion, Equipo } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
@@ -108,7 +108,7 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
       const docData: Omit<Intervencion, 'id'> = {
         vertical: data.vertical,
         locked: false,
-        token: Math.random().toString(36).substring(2, 15),
+        token: intervention?.token || Math.random().toString(36).substring(2, 15),
         numeroIntervencion: intervention?.numeroIntervencion || `INT-${Date.now().toString().slice(-6)}`,
         equipoId: equipo.id,
         equipoSnapshot: {

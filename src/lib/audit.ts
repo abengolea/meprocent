@@ -1,3 +1,4 @@
+
 'use client';
 
 import { collection, addDoc, serverTimestamp, Firestore } from 'firebase/firestore';
@@ -35,13 +36,14 @@ export async function writeAuditLog({
   const auditRef = collection(db, 'intervenciones', interventionId, 'audit');
   
   try {
-    await addDoc(auditRef, {
+    // No usamos await para no bloquear la UI, confiamos en la persistencia offline de Firestore
+    addDoc(auditRef, {
       timestamp: serverTimestamp(),
       action,
       userId,
       userName,
       payload,
-    });
+    }).catch(err => console.error("Audit Log Error:", err));
   } catch (error) {
     console.error(`Audit Log Failure [${action}]:`, error);
   }
