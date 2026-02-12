@@ -27,14 +27,10 @@ import {
     Download,
     ExternalLink,
     ShieldCheck
-} from "lucide-react";
+} from "lucide-center";
 import { formatDate } from "@/lib/utils";
 
-interface PestControlDossierProps {
-    intervencion: Intervencion & { id: string };
-}
-
-export function PestControlDossier({ intervencion }: PestControlDossierProps) {
+export function PestControlDossier({ intervencion }: { intervencion: Intervencion & { id: string } }) {
     const { toast } = useToast();
     const db = useFirestore();
     const { profile } = useUser();
@@ -60,29 +56,22 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
         if (!db || !profile || isLocked) return;
         setIsSaving(true);
         try {
-            const docRef = doc(db, 'intervenciones', intervencion.id);
             const trabajoRealizado = (document.getElementById('trabajoRealizado') as HTMLTextAreaElement)?.value;
-            
-            await updateDoc(docRef, {
+            await updateDoc(doc(db, 'intervenciones', intervencion.id), {
                 trabajoRealizado,
                 updatedAt: serverTimestamp()
             });
 
             await writeAuditLog({
-                db,
-                interventionId: intervencion.id,
-                action: "UPDATED",
-                userId: profile.id,
-                userName: profile.displayName,
+                db, interventionId: intervencion.id, action: "UPDATED",
+                userId: profile.id, userName: profile.displayName,
                 payload: { field: 'trabajoRealizado' }
             });
 
-            toast({ title: "Cambios guardados", description: "El expediente ha sido actualizado." });
+            toast({ title: "Guardado", description: "Expediente actualizado." });
         } catch (e) {
             toast({ variant: "destructive", title: "Error", description: "No se pudo guardar." });
-        } finally {
-            setIsSaving(false);
-        }
+        } finally { setIsSaving(false); }
     };
 
     const handleAddConsumption = async () => {
@@ -91,12 +80,8 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
         if (!insumo) return;
 
         const newConsumption: Consumption = {
-            type: 'chemical',
-            refId: insumo.id,
-            name: insumo.name,
-            internalCode: insumo.internalCode,
-            qty: 1,
-            unit: 'gr/ml',
+            type: 'chemical', refId: insumo.id, name: insumo.name,
+            internalCode: insumo.internalCode, qty: 1, unit: 'gr/ml',
         };
 
         try {
@@ -104,9 +89,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                 consumptions: arrayUnion(newConsumption)
             });
             toast({ title: "Insumo Agregado", description: `${insumo.internalCode} registrado.` });
-        } catch (e) {
-            toast({ variant: "destructive", title: "Error", description: "No se pudo registrar el consumo." });
-        }
+        } catch (e) { toast({ variant: "destructive", title: "Error", description: "No se pudo registrar." }); }
     };
 
     return (
@@ -115,30 +98,24 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                 <div>
                     <h2 className="text-2xl font-bold flex items-center gap-2">
                         {intervencion.numeroIntervencion}
-                        {isLocked && <Badge variant="secondary" className="ml-2 bg-green-100 text-green-800"><ShieldCheck className="w-3 h-3 mr-1"/> CERTIFICADO</Badge>}
+                        {isLocked && <Badge className="bg-green-100 text-green-800"><ShieldCheck className="w-3 h-3 mr-1"/> CERTIFICADO</Badge>}
                     </h2>
-                    <p className="text-muted-foreground">Expediente Técnico de Control de Plagas</p>
+                    <p className="text-muted-foreground text-sm">Expediente Técnico MEPROCENT</p>
                 </div>
                 <div className="flex gap-2">
                     {isLocked && (
                         <Button variant="outline" asChild>
                             <a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">
-                                <Download className="w-4 h-4 mr-2" />
-                                Descargar PDF Certificado
+                                <Download className="w-4 h-4 mr-2" /> Descargar PDF
                             </a>
                         </Button>
                     )}
                     {!isLocked ? (
-                        <Button onClick={handleSave} disabled={isSaving} className="bg-primary hover:bg-primary/90">
+                        <Button onClick={handleSave} disabled={isSaving}>
                             {isSaving ? <Loader2 className="w-4 h-4 mr-2 animate-spin" /> : <Save className="w-4 h-4 mr-2" />}
-                            Guardar Avance
+                            Guardar
                         </Button>
-                    ) : (
-                        <Button variant="ghost" disabled className="text-green-600 font-bold">
-                            <CheckCircle2 className="w-4 h-4 mr-2" />
-                            Documento Cerrado para Auditoría
-                        </Button>
-                    )}
+                    ) : <Badge variant="outline" className="text-green-600">Documento Bloqueado</Badge>}
                 </div>
             </div>
 
@@ -147,152 +124,90 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                     <CardContent className="py-4 flex items-center justify-between">
                         <div className="flex items-center gap-3 text-primary">
                             <ExternalLink className="w-5 h-5" />
-                            <div>
-                                <p className="text-sm font-bold">Link de Certificación para el Cliente</p>
-                                <p className="text-[10px] opacity-80 uppercase tracking-widest">Envíe este enlace para firma digital</p>
-                            </div>
+                            <p className="text-sm font-bold">Link para el Cliente</p>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => {
                             const url = `${window.location.origin}/p/${intervencion.id}?token=${intervencion.token}`;
                             navigator.clipboard.writeText(url);
-                            toast({ title: "Link copiado", description: "Envía este link al cliente para que firme." });
-                        }}>
-                            Copiar URL Pública
-                        </Button>
+                            toast({ title: "Link copiado" });
+                        }}>Copiar URL</Button>
                     </CardContent>
                 </Card>
             )}
 
-            <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-                <TabsList className="grid grid-cols-5 w-full h-auto bg-muted/50 p-1">
-                    <TabsTrigger value="solicitud" className="flex flex-col py-3 gap-1"><ClipboardList className="w-4 h-4" /><span className="text-[10px] md:text-xs">Solicitud</span></TabsTrigger>
-                    <TabsTrigger value="ejecucion" className="flex flex-col py-3 gap-1"><Play className="w-4 h-4" /><span className="text-[10px] md:text-xs">Ejecución</span></TabsTrigger>
-                    <TabsTrigger value="quimicos" className="flex flex-col py-3 gap-1"><FlaskConical className="w-4 h-4" /><span className="text-[10px] md:text-xs">Químicos</span></TabsTrigger>
-                    <TabsTrigger value="evidencia" className="flex flex-col py-3 gap-1"><ImageIcon className="w-4 h-4" /><span className="text-[10px] md:text-xs">Evidencia</span></TabsTrigger>
-                    <TabsTrigger value="conformidad" className="flex flex-col py-3 gap-1"><ShieldCheck className="w-4 h-4" /><span className="text-[10px] md:text-xs">Firma</span></TabsTrigger>
+            <Tabs value={activeTab} onValueChange={setActiveTab}>
+                <TabsList className="grid grid-cols-5 w-full">
+                    <TabsTrigger value="solicitud"><ClipboardList className="w-4 h-4"/></TabsTrigger>
+                    <TabsTrigger value="ejecucion"><Play className="w-4 h-4"/></TabsTrigger>
+                    <TabsTrigger value="quimicos"><FlaskConical className="w-4 h-4"/></TabsTrigger>
+                    <TabsTrigger value="evidencia"><ImageIcon className="w-4 h-4"/></TabsTrigger>
+                    <TabsTrigger value="conformidad"><ShieldCheck className="w-4 h-4"/></TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="solicitud">
-                    <Card>
-                        <CardHeader><CardTitle className="text-lg">Datos de la Solicitud</CardTitle></CardHeader>
-                        <CardContent className="space-y-4 text-sm">
-                            <div className="grid grid-cols-2 gap-4">
-                                <div className="p-3 bg-muted/30 rounded-lg">
-                                    <p className="font-bold text-muted-foreground uppercase text-[10px]">Solicitante</p>
-                                    <p className="font-medium text-base">{intervencion.solicitante || 'No especificado'}</p>
-                                </div>
-                                <div className="p-3 bg-muted/30 rounded-lg">
-                                    <p className="font-bold text-muted-foreground uppercase text-[10px]">Aviso N°</p>
-                                    <p className="font-medium text-base">{intervencion.numeroAviso || 'Entrada Manual'}</p>
-                                </div>
-                            </div>
-                            <div className="p-4 border rounded-lg bg-white">
-                                <p className="font-bold text-muted-foreground uppercase text-[10px] mb-2">Descripción del Problema Reportado</p>
-                                <p className="italic text-secondary leading-relaxed">{intervencion.descripcionProblema || 'Sin descripción previa registrada.'}</p>
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <Card><CardContent className="pt-6 space-y-4">
+                        <div className="grid grid-cols-2 gap-4">
+                            <div className="p-3 bg-muted rounded-lg"><p className="text-[10px] font-bold">SOLICITANTE</p><p>{intervencion.solicitante || 'N/A'}</p></div>
+                            <div className="p-3 bg-muted rounded-lg"><p className="text-[10px] font-bold">AVISO N°</p><p>{intervencion.numeroAviso || 'MANUAL'}</p></div>
+                        </div>
+                        <div className="p-4 border rounded-lg bg-white italic">{intervencion.descripcionProblema || 'Sin descripción.'}</div>
+                    </CardContent></Card>
                 </TabsContent>
 
                 <TabsContent value="ejecucion">
-                    <Card>
-                        <CardHeader><CardTitle className="text-lg">Ejecución Técnica</CardTitle></CardHeader>
-                        <CardContent className="space-y-4">
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold flex items-center gap-2 text-secondary"><User className="w-4 h-4" /> Técnico Responsable</label>
-                                <Input value={intervencion.tecnicoSnapshot.displayName} disabled className="bg-muted/50" />
-                            </div>
-                            <div className="space-y-2">
-                                <label className="text-sm font-bold text-secondary">Descripción del Procedimiento Técnico</label>
-                                <Textarea 
-                                    id="trabajoRealizado" 
-                                    defaultValue={intervencion.trabajoRealizado} 
-                                    disabled={isLocked} 
-                                    rows={8} 
-                                    placeholder="Describa paso a paso las tareas realizadas..." 
-                                    className="resize-none"
-                                />
-                            </div>
-                        </CardContent>
-                    </Card>
+                    <Card><CardContent className="pt-6 space-y-4">
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold">Técnico Responsable</label>
+                            <Input value={intervencion.tecnicoSnapshot.displayName} disabled />
+                        </div>
+                        <div className="space-y-2">
+                            <label className="text-sm font-bold">Descripción del Procedimiento</label>
+                            <Textarea id="trabajoRealizado" defaultValue={intervencion.trabajoRealizado} disabled={isLocked} rows={8} />
+                        </div>
+                    </CardContent></Card>
                 </TabsContent>
 
                 <TabsContent value="quimicos">
                     <Card>
                         <CardHeader className="flex flex-row items-center justify-between">
-                            <div>
-                                <CardTitle className="text-lg">Control de Insumos Químicos</CardTitle>
-                                <CardDescription>Trazabilidad por códigos internos MEPROCENT.</CardDescription>
-                            </div>
+                            <CardTitle className="text-lg">Control de Insumos</CardTitle>
                             {!isLocked && (
                                 <div className="flex gap-2">
                                     <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                                        <SelectTrigger className="w-[200px]"><SelectValue placeholder="Código..." /></SelectTrigger>
-                                        <SelectContent>
-                                            {insumos.map(i => (
-                                                <SelectItem key={i.id} value={i.id}>{i.internalCode} - {i.name}</SelectItem>
-                                            ))}
-                                        </SelectContent>
+                                        <SelectTrigger className="w-[150px]"><SelectValue placeholder="Insumo..." /></SelectTrigger>
+                                        <SelectContent>{insumos.map(i => <SelectItem key={i.id} value={i.id}>{i.internalCode}</SelectItem>)}</SelectContent>
                                     </Select>
-                                    <Button size="sm" onClick={handleAddConsumption} disabled={!selectedInsumoId}><Plus className="w-4 h-4 mr-1"/> Registrar</Button>
+                                    <Button size="sm" onClick={handleAddConsumption} disabled={!selectedInsumoId}>+</Button>
                                 </div>
                             )}
                         </CardHeader>
                         <CardContent>
-                            <div className="border rounded-lg overflow-hidden">
-                                <table className="w-full text-sm text-left">
-                                    <thead className="bg-secondary text-secondary-foreground font-bold">
-                                        <tr><th className="p-3">Código</th><th className="p-3">Producto</th><th className="p-3 text-right">Cantidad</th></tr>
-                                    </thead>
-                                    <tbody>
-                                        {intervencion.consumptions?.length ? intervencion.consumptions.map((c, i) => (
-                                            <tr key={i} className="border-t">
-                                                <td className="p-3 font-mono font-bold text-primary">{c.internalCode}</td>
-                                                <td className="p-3">{c.name}</td>
-                                                <td className="p-3 text-right">{c.qty} {c.unit}</td>
-                                            </tr>
-                                        )) : (
-                                            <tr><td colSpan={3} className="p-12 text-center text-muted-foreground italic">No hay consumos registrados.</td></tr>
-                                        )}
-                                    </tbody>
-                                </table>
-                            </div>
+                            <table className="w-full text-sm">
+                                <thead><tr className="bg-secondary text-secondary-foreground"><th className="p-2">Cód</th><th className="p-2">Nombre</th><th className="p-2">Cant</th></tr></thead>
+                                <tbody>
+                                    {intervencion.consumptions?.map((c, i) => <tr key={i} className="border-t"><td className="p-2 font-bold">{c.internalCode}</td><td className="p-2">{c.name}</td><td className="p-2">{c.qty}</td></tr>)}
+                                </tbody>
+                            </table>
                         </CardContent>
                     </Card>
                 </TabsContent>
 
                 <TabsContent value="evidencia">
-                    <Card><CardContent className="py-20 text-center text-muted-foreground flex flex-col items-center gap-4">
-                        <ImageIcon className="w-12 h-12 opacity-30" />
-                        <p className="font-bold">Registro Fotográfico</p>
-                        {!isLocked && <Button variant="outline"><ImageIcon className="w-4 h-4 mr-2"/> Cargar Foto</Button>}
-                    </CardContent></Card>
+                    <Card><CardContent className="py-20 text-center"><ImageIcon className="w-12 h-12 mx-auto opacity-20" /><p>Módulo de fotos próximamente.</p></CardContent></Card>
                 </TabsContent>
 
                 <TabsContent value="conformidad">
-                    <Card>
-                        <CardHeader><CardTitle className="text-lg">Certificación Digital</CardTitle></CardHeader>
-                        <CardContent className="space-y-6">
-                            {isLocked ? (
-                                <div className="border rounded-xl p-8 bg-green-50 flex flex-col items-center border-green-200">
-                                    {intervencion.signature?.image && <img src={intervencion.signature.image} alt="Firma" className="max-h-32 mb-6" />}
-                                    <p className="font-black text-green-700 text-xl uppercase">EXPEDIENTE CERTIFICADO</p>
-                                    <Button variant="default" className="mt-8" asChild>
-                                        <a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">
-                                            <Download className="w-5 h-5 mr-2" /> Descargar PDF
-                                        </a>
-                                    </Button>
-                                </div>
-                            ) : (
-                                <div className="text-center py-12 border-2 border-dashed rounded-xl">
-                                    <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                                    <Button variant="outline" onClick={() => window.open(`/p/${intervencion.id}?token=${intervencion.token}`, '_blank')}>
-                                        Abrir Portal de Firma
-                                    </Button>
-                                </div>
-                            )}
-                        </CardContent>
-                    </Card>
+                    <Card><CardContent className="pt-6 text-center">
+                        {isLocked ? (
+                            <div className="space-y-4">
+                                <CheckCircle2 className="w-16 h-16 mx-auto text-green-500" />
+                                <p className="font-bold">CERTIFICADO DIGITALMENTE</p>
+                                <Button asChild><a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">PDF Oficial</a></Button>
+                            </div>
+                        ) : (
+                            <Button variant="outline" onClick={() => window.open(`/p/${intervencion.id}?token=${intervencion.token}`, '_blank')}>Abrir Portal de Firma</Button>
+                        )}
+                    </CardContent></Card>
                 </TabsContent>
             </Tabs>
         </div>

@@ -1,4 +1,3 @@
-
 import { NextRequest, NextResponse } from 'next/server';
 import { renderToStream } from '@react-pdf/renderer';
 import { InterventionPDF } from '@/components/interventions/pdf-template';
@@ -27,14 +26,10 @@ export async function GET(
 
     const intervencion = { id: docSnap.id, ...docSnap.data() } as any;
 
-    // Validación de seguridad por token
     if (!token || intervencion.token !== token) {
-      // Si no hay token, verificamos si hay sesión (para admins)
-      // En este prototipo, priorizamos el token para el acceso público
       if (!token) return new NextResponse('Unauthorized', { status: 401 });
     }
 
-    // Obtener logs de auditoría para el PDF
     const auditQuery = query(collection(db, 'intervenciones', id, 'audit'), orderBy('timestamp', 'asc'));
     const auditSnap = await getDocs(auditQuery);
     const auditLogs = auditSnap.docs.map(d => d.data());

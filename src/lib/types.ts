@@ -14,14 +14,6 @@ export interface User {
   lastLoginAt?: Date | Timestamp;
 }
 
-export interface Empresa {
-  id: string;
-  razonSocial: string;
-  nombreComercial?: string;
-  cuit?: string;
-  activa: boolean;
-}
-
 export interface Insumo {
   id: string;
   internalCode: string;
@@ -41,14 +33,6 @@ export interface Consumption {
   internalCode?: string;
   qty: number;
   unit: string;
-  method?: string;
-  notes?: string;
-}
-
-export interface Evidence {
-  type: 'before' | 'after' | 'evidence';
-  url: string;
-  timestamp: Date | Timestamp;
 }
 
 export interface Signature {
@@ -58,31 +42,12 @@ export interface Signature {
   timestamp: string | Date | Timestamp;
 }
 
-export interface Equipo {
-  id: string;
-  codigoInterno: string;
-  descripcion: string;
-  tipoEquipo: 'tablero_electrico' | 'motor' | 'bomba' | 'ups' | 'transformador' | 'cebadera' | 'trampa' | 'otro';
-  ubicacion: {
-    planta: string;
-    sector: string;
-  };
-  estadoActual: 'operativo' | 'fuera_de_servicio' | 'en_reparacion' | 'en_mantenimiento';
-  empresaId: string;
-}
-
-export type EstadoIntervencion = 'asignada' | 'en_progreso' | 'pausada' | 'completada_tecnico' | 'aprobada' | 'cerrada';
-
 export interface Intervencion {
   id?: string;
   vertical: VerticalType;
   locked: boolean;
   token?: string;
-  closedAt?: Date | Timestamp;
   numeroIntervencion: string;
-  numeroAviso?: string;
-  solicitante?: string;
-  descripcionProblema?: string;
   equipoId: string;
   equipoSnapshot: {
     codigoInterno: string;
@@ -95,18 +60,19 @@ export interface Intervencion {
     displayName: string;
     email: string;
   };
-  estado: EstadoIntervencion;
-  consumptions?: Consumption[];
-  evidence?: Evidence[];
-  signature?: Signature;
+  estado: 'asignada' | 'en_progreso' | 'pausada' | 'completada_tecnico' | 'aprobada' | 'cerrada';
   empresaId: string;
   trabajoRealizado: string;
   fechaInicio: Date | Timestamp;
-  updatedAt?: Date | Timestamp;
+  closedAt?: Date | Timestamp;
+  consumptions?: Consumption[];
+  signature?: Signature;
+  solicitante?: string;
+  numeroAviso?: string;
+  descripcionProblema?: string;
 }
 
 export interface AuditLog {
-  id?: string;
   timestamp: Date | Timestamp;
   action: string;
   userId: string;

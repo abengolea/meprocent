@@ -4,7 +4,6 @@ import { collection, addDoc, serverTimestamp, Firestore } from 'firebase/firesto
 
 export type AuditAction =
   | "CREATED"
-  | "ASSIGNED"
   | "STARTED"
   | "UPDATED"
   | "EVIDENCE_ADDED"

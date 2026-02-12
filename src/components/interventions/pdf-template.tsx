@@ -1,13 +1,11 @@
-
 import React from 'react';
 import { Page, Text, View, Document, StyleSheet, Image } from '@react-pdf/renderer';
-import { Intervencion, AuditLog } from '@/lib/types';
+import { Intervencion } from '@/lib/types';
 import { formatDate } from '@/lib/utils';
 
 const styles = StyleSheet.create({
   page: { padding: 40, fontSize: 10, fontFamily: 'Helvetica' },
   header: { flexDirection: 'row', justifyContent: 'space-between', marginBottom: 20, borderBottom: 2, borderBottomColor: '#1a2b3c', paddingBottom: 10 },
-  logo: { width: 60, height: 60 },
   companyTitle: { fontSize: 18, fontWeight: 'bold', color: '#1a2b3c' },
   sectionTitle: { fontSize: 12, fontWeight: 'bold', backgroundColor: '#f3f4f6', padding: 5, marginTop: 15, marginBottom: 10 },
   row: { flexDirection: 'row', marginBottom: 5 },
@@ -21,12 +19,7 @@ const styles = StyleSheet.create({
   signatureImage: { width: 150, height: 60, marginBottom: 5 }
 });
 
-interface InterventionPDFProps {
-  intervencion: Intervencion;
-  auditLogs: any[];
-}
-
-export const InterventionPDF = ({ intervencion, auditLogs }: InterventionPDFProps) => (
+export const InterventionPDF = ({ intervencion, auditLogs }: { intervencion: Intervencion, auditLogs: any[] }) => (
   <Document>
     <Page size="A4" style={styles.page}>
       <View style={styles.header}>
@@ -41,16 +34,12 @@ export const InterventionPDF = ({ intervencion, auditLogs }: InterventionPDFProp
         </View>
       </View>
 
-      <View style={styles.sectionTitle}>
-        <Text>DATOS DEL CLIENTE Y EQUIPO</Text>
-      </View>
-      <View style={styles.row}><Text style={styles.label}>Cliente:</Text><Text style={styles.value}>{intervencion.empresaId}</Text></View>
+      <View style={styles.sectionTitle}><Text>DATOS DEL CLIENTE Y EQUIPO</Text></View>
+      <View style={styles.row}><Text style={styles.label}>Cliente ID:</Text><Text style={styles.value}>{intervencion.empresaId}</Text></View>
       <View style={styles.row}><Text style={styles.label}>Equipo:</Text><Text style={styles.value}>{intervencion.equipoSnapshot.descripcion} ({intervencion.equipoSnapshot.codigoInterno})</Text></View>
       <View style={styles.row}><Text style={styles.label}>Ubicación:</Text><Text style={styles.value}>{intervencion.equipoSnapshot.ubicacion}</Text></View>
 
-      <View style={styles.sectionTitle}>
-        <Text>EJECUCIÓN TÉCNICA</Text>
-      </View>
+      <View style={styles.sectionTitle}><Text>EJECUCIÓN TÉCNICA</Text></View>
       <View style={styles.row}><Text style={styles.label}>Técnico:</Text><Text style={styles.value}>{intervencion.tecnicoSnapshot.displayName}</Text></View>
       <View style={styles.row}><Text style={styles.label}>Servicio:</Text><Text style={styles.value}>{intervencion.tipoIntervencion.toUpperCase()}</Text></View>
       <View style={{ marginTop: 10 }}>
@@ -60,9 +49,7 @@ export const InterventionPDF = ({ intervencion, auditLogs }: InterventionPDFProp
 
       {intervencion.consumptions && intervencion.consumptions.length > 0 && (
         <>
-          <View style={styles.sectionTitle}>
-            <Text>CONTROL DE INSUMOS QUÍMICOS</Text>
-          </View>
+          <View style={styles.sectionTitle}><Text>CONTROL DE INSUMOS QUÍMICOS</Text></View>
           <View style={styles.table}>
             <View style={styles.tableHeader}>
               <Text style={{ width: '20%' }}>Código</Text>
@@ -91,8 +78,7 @@ export const InterventionPDF = ({ intervencion, auditLogs }: InterventionPDFProp
       )}
 
       <Text style={styles.footer}>
-        Este documento ha sido generado electrónicamente y posee validez de certificación técnica. 
-        MEPROCENT SOLUCIONES INDUSTRIALES - ID: {intervencion.token}
+        Este documento posee validez de certificación técnica. MEPROCENT SOLUCIONES INDUSTRIALES - ID: {intervencion.token}
       </Text>
     </Page>
   </Document>
