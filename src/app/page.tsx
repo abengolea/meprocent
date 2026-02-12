@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -51,9 +52,14 @@ export default function LoginPage() {
       await signInGoogle();
       router.push('/dashboard');
     } catch (error: any) {
-      if (error.code === 'auth/unauthorized-domain') setAuthError('domain');
-      else if (error.code === 'auth/popup-closed-by-user') toast({ title: 'Aviso', description: 'Cerraste la ventana de Google.' });
-      else toast({ variant: 'destructive', description: error.message });
+      console.error("Auth Error:", error.code, error.message);
+      if (error.code === 'auth/unauthorized-domain') {
+        setAuthError('domain');
+      } else if (error.code === 'auth/popup-closed-by-user') {
+        toast({ title: 'Ventana cerrada', description: 'Cerraste la ventana de Google antes de terminar.' });
+      } else {
+        toast({ variant: 'destructive', description: error.message });
+      }
     } finally { setLoading(false); }
   }
 
@@ -73,7 +79,7 @@ export default function LoginPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Dominio no autorizado</AlertTitle>
               <AlertDescription className="space-y-2">
-                <p className="text-xs">Agregue este host en Firebase (Auth > Settings > Authorized domains):</p>
+                <p className="text-xs">Para que el login de Google funcione, debes agregar este dominio en tu Consola de Firebase (Auth > Settings > Authorized domains):</p>
                 <div className="flex items-center gap-2 bg-black/10 p-2 rounded text-[10px]">
                   <code className="flex-1">{currentHost}</code>
                   <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(currentHost); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>

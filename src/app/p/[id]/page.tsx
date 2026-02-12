@@ -1,3 +1,4 @@
+
 'use client';
 
 import * as React from 'react';
@@ -16,6 +17,10 @@ import { formatDate } from '@/lib/utils';
 import { writeAuditLog } from '@/lib/audit';
 import { Badge } from '@/components/ui/badge';
 
+/**
+ * Portal público para certificación de servicios por parte del cliente.
+ * Ruta: /p/[id]?token=[token]
+ */
 export default function PublicInterventionPage() {
   const params = useParams();
   const searchParams = useSearchParams();
