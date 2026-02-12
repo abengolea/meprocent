@@ -2,7 +2,8 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
-    
+
+    // --- FUNCIONES DE AYUDA ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -15,36 +16,60 @@ service cloud.firestore {
       return isSignedIn() && userDoc().role == role;
     }
     
+    function isSuperAdmin() {
+      return hasRole('super_admin');
+    }
+    
     function inCompany(companyId) {
-      return isSignedIn() && (userDoc().empresaId == companyId || hasRole('super_admin'));
+      return isSignedIn() && (userDoc().empresaId == companyId || isSuperAdmin());
+    }
+
+    function interventionDoc(id) {
+      return get(/databases/$(database)/documents/intervenciones/$(id)).data;
     }
 
     function isNotLocked(id) {
       return !(get(/databases/$(database)/documents/intervenciones/$(id)).data.locked == true);
     }
 
+    // --- REGLAS POR COLECCIÓN ---
+
+    // Usuarios: Evitar fuga de datos y auto-escalado de privilegios
     match /users/{userId} {
-      allow read: if isSignedIn();
-      allow write: if hasRole('admin') || hasRole('super_admin') || request.auth.uid == userId;
+      allow read: if isSignedIn() && (
+        request.auth.uid == userId || 
+        isSuperAdmin() || 
+        (hasRole('admin') && userDoc().empresaId == resource.data.empresaId)
+      );
+      
+      // El usuario solo puede actualizar campos básicos, no su rol ni empresa
+      allow update: if isSignedIn() && request.auth.uid == userId 
+        && request.resource.data.role == resource.data.role
+        && request.resource.data.empresaId == resource.data.empresaId;
+        
+      // Solo admins pueden crear o gestionar roles
+      allow create, update: if isSignedIn() && (hasRole('admin') || isSuperAdmin());
+      allow delete: if false;
     }
 
     match /empresas/{empresaId} {
-      allow read: if isSignedIn() && (hasRole('super_admin') || userDoc().empresaId == empresaId);
-      allow write: if hasRole('super_admin');
+      allow read: if isSignedIn() && (isSuperAdmin() || userDoc().empresaId == empresaId);
+      allow write: if isSuperAdmin();
     }
 
     match /equipos/{equipoId} {
       allow read: if isSignedIn() && inCompany(resource.data.empresaId);
-      allow write: if isSignedIn() && (hasRole('admin') || hasRole('super_admin'));
+      allow write: if isSignedIn() && (hasRole('admin') || isSuperAdmin());
+      allow delete: if false;
     }
 
     match /insumos/{insumoId} {
+      // Insumos pueden ser globales o por empresa
       allow read: if isSignedIn();
-      allow write: if hasRole('admin') || hasRole('super_admin');
+      allow write: if hasRole('admin') || isSuperAdmin();
     }
 
     match /intervenciones/{id} {
-      // El acceso público se gestiona vía API Route / Servidor para validar tokens
       allow read: if isSignedIn() && inCompany(resource.data.empresaId);
       
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
@@ -53,12 +78,35 @@ service cloud.firestore {
         && inCompany(resource.data.empresaId) 
         && isNotLocked(id);
 
-      allow delete: if hasRole('super_admin');
+      // Integridad referencial: no se borran intervenciones certificadas
+      allow delete: if isSuperAdmin() && isNotLocked(id);
 
+      // Subcolección de Auditoría: Inmutable y restringida a la empresa
       match /audit/{auditId} {
-        allow read: if isSignedIn() && inCompany(get(/databases/$(database)/documents/intervenciones/$(id)).data.empresaId);
-        allow create: if isSignedIn();
+        allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
+        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
         allow update, delete: if false; 
+      }
+
+      // Evidencia Fotográfica
+      match /evidence/{evId} {
+        allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
+        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId) && isNotLocked(id);
+        allow update, delete: if false;
+      }
+
+      // Firmas de Certificación
+      match /signatures/{sigId} {
+        allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
+        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId) && isNotLocked(id);
+        allow update, delete: if false;
+      }
+
+      // Consumos de Químicos (Subcolección para trazabilidad detallada)
+      match /consumptions/{cId} {
+        allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
+        allow create: if isSignedIn() && inCompany(interventionDoc(id).empresaId) && isNotLocked(id);
+        allow update, delete: if false;
       }
     }
   }

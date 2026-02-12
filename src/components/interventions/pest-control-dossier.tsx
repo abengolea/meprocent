@@ -100,7 +100,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                 <div className="flex gap-2">
                     {isLocked && (
                         <Button variant="outline" asChild>
-                            <a href={`/api/intervenciones/${intervencion.id}/pdf`} target="_blank">
+                            <a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">
                                 <Download className="w-4 h-4 mr-2" />
                                 Descargar PDF
                             </a>
@@ -258,7 +258,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                                         <p>Finalizado el {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>
                                     </div>
                                     <Button variant="outline" className="mt-6" asChild>
-                                        <a href={`/api/intervenciones/${intervencion.id}/pdf`} target="_blank">
+                                        <a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">
                                             <Download className="w-4 h-4 mr-2" />
                                             Descargar Reporte PDF
                                         </a>
