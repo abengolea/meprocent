@@ -28,7 +28,7 @@ service cloud.firestore {
       return !(interventionDoc(id).locked == true);
     }
 
-    // USERS
+    // USERS: Privacidad total y prevención de escalado
     match /users/{userId} {
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
@@ -61,11 +61,10 @@ service cloud.firestore {
     }
 
     match /intervenciones/{id} {
-      allow get: if true; // Permitir lectura pública individual por portal seguro (validado en app)
+      allow get: if true; // Portal público validado por token en app
       allow list: if isSignedIn() && inCompany(resource.data.empresaId);
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
       
-      // Bloquear actualización si el documento está locked (excepto campos de certificación técnica)
       allow update: if (isSignedIn() && inCompany(resource.data.empresaId) && isNotLocked(id))
                     || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'estado', 'closedAt']));
 
