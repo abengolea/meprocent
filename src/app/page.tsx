@@ -63,6 +63,8 @@ export default function LoginPage() {
     if (error.code === 'auth/unauthorized-domain') {
       setAuthError('dominio_no_autorizado');
       message = 'Este dominio no está autorizado en la consola de Firebase.';
+    } else if (error.code === 'auth/popup-blocked') {
+      message = 'El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio e intenta de nuevo.';
     } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
       message = 'Email o contraseña incorrectos.';
     } else if (error.code === 'auth/popup-closed-by-user') {

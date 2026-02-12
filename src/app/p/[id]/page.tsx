@@ -14,6 +14,7 @@ import { CheckCircle2, Loader2, Download, AlertTriangle, FileText, ShieldCheck }
 import { useToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/utils';
 import { writeAuditLog } from '@/lib/audit';
+import { Badge } from '@/components/ui/badge';
 
 export default function PublicInterventionPage() {
   const params = useParams();

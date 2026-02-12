@@ -1,4 +1,3 @@
-
 import { Timestamp } from 'firebase/firestore';
 
 export type VerticalType = 'maintenance' | 'pest_control';
@@ -7,7 +6,7 @@ export interface User {
   id: string;
   email: string;
   displayName: string;
-  role: 'super_admin' | 'admin' | 'supervisor' | 'tecnico_senior' | 'tecnico';
+  role: 'super_admin' | 'admin' | 'supervisor' | 'tecnico_senior' | 'tecnico' | 'cliente';
   empresaId: string;
   activo: boolean;
   photoURL?: string;
@@ -25,13 +24,14 @@ export interface Empresa {
 
 export interface Insumo {
   id: string;
-  internalCode: string; // Ej: M01
+  internalCode: string;
   type: 'chemical' | 'material' | 'spare_part';
   name: string;
   activeIngredient?: string;
   registration?: string;
   toxicity?: string;
   msdsUrl?: string;
+  empresaId?: string;
 }
 
 export interface Consumption {
@@ -55,7 +55,7 @@ export interface Signature {
   image: string; // Base64
   name: string;
   dni: string;
-  timestamp: Date | Timestamp;
+  timestamp: string | Date | Timestamp;
 }
 
 export interface Equipo {
@@ -102,4 +102,14 @@ export interface Intervencion {
   empresaId: string;
   trabajoRealizado: string;
   fechaInicio: Date | Timestamp;
+  updatedAt?: Date | Timestamp;
+}
+
+export interface AuditLog {
+  id?: string;
+  timestamp: Date | Timestamp;
+  action: string;
+  userId: string;
+  userName: string;
+  payload?: Record<string, any>;
 }

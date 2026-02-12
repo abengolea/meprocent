@@ -34,14 +34,12 @@ service cloud.firestore {
     // --- REGLAS POR COLECCIÓN ---
 
     match /users/{userId} {
-      // P0: Solo el propio usuario, super_admin o admin de la misma empresa pueden leer
       allow read: if isSignedIn() && (
         request.auth.uid == userId || 
         isSuperAdmin() || 
         (hasRole('admin') && userDoc().empresaId == resource.data.empresaId)
       );
       
-      // P0: El usuario puede actualizar sus datos básicos pero NO su rol ni empresaId
       allow update: if isSignedIn() && request.auth.uid == userId 
         && request.resource.data.role == resource.data.role
         && request.resource.data.empresaId == resource.data.empresaId;
@@ -67,11 +65,8 @@ service cloud.firestore {
     }
 
     match /intervenciones/{id} {
-      // Permitir GET público para el portal de firma (seguridad por ID y Token)
-      allow get: if true;
-      
+      allow get: if true; // Permitir lectura pública individual por token (validado en app)
       allow list: if isSignedIn() && inCompany(resource.data.empresaId);
-      
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
       
       // Bloquear actualización si el documento está locked (excepto para firmar)
@@ -80,10 +75,9 @@ service cloud.firestore {
 
       allow delete: if false;
 
-      // Subcolecciones protegidas por empresa e inmutabilidad
       match /audit/{auditId} {
         allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
-        allow create: if (isSignedIn() && inCompany(interventionDoc(id).empresaId)) || true; // Permitir log de firma pública
+        allow create: if (isSignedIn() && inCompany(interventionDoc(id).empresaId)) || true;
         allow update, delete: if false; 
       }
 
