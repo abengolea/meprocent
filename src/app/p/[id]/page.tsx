@@ -1,4 +1,3 @@
-
 'use client';
 
 import * as React from 'react';
@@ -11,7 +10,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SignaturePad } from '@/components/interventions/signature-pad';
 import { MeprocentLogo, MeprocentText } from '@/components/logo';
-import { CheckCircle2, Loader2, Download, AlertTriangle, FileText } from 'lucide-react';
+import { CheckCircle2, Loader2, Download, AlertTriangle, FileText, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/utils';
 import { writeAuditLog } from '@/lib/audit';
@@ -40,7 +39,7 @@ export default function PublicInterventionPage() {
       <div className="min-h-screen flex flex-col items-center justify-center p-4 text-center">
         <AlertTriangle className="h-16 w-16 text-destructive mb-4" />
         <h1 className="text-2xl font-bold">Acceso Denegado</h1>
-        <p className="text-muted-foreground">El link es inválido o ha expirado.</p>
+        <p className="text-muted-foreground">El link de certificación es inválido o ha expirado.</p>
       </div>
     );
   }
@@ -90,87 +89,104 @@ export default function PublicInterventionPage() {
           <MeprocentText className="text-center" />
         </div>
 
-        <Card>
+        <Card className="border-t-4 border-t-primary">
           <CardHeader>
             <div className="flex justify-between items-start">
               <div>
-                <CardTitle>Certificación de Servicio</CardTitle>
+                <CardTitle className="text-2xl font-bold">Certificación de Servicio</CardTitle>
                 <CardDescription>Expediente N° {intervencion.numeroIntervencion}</CardDescription>
               </div>
               {intervencion.locked && (
-                <Button variant="outline" size="sm" asChild>
-                  <a href={`/api/intervenciones/${id}/pdf?token=${token}`} target="_blank">
-                    <Download className="mr-2 h-4 w-4" /> PDF
-                  </a>
-                </Button>
+                <div className="flex items-center gap-2 text-green-600 font-bold text-sm bg-green-50 px-3 py-1 rounded-full border border-green-200">
+                  <ShieldCheck className="w-4 h-4" />
+                  CERTIFICADO
+                </div>
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-muted/50 p-4 rounded-lg">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-muted/50 p-4 rounded-lg border border-border">
               <div>
-                <p className="font-bold text-muted-foreground uppercase text-[10px]">Equipo</p>
-                <p className="font-medium">{intervencion.equipoSnapshot.descripcion}</p>
+                <p className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Equipo / Activo</p>
+                <p className="font-medium text-base">{intervencion.equipoSnapshot.descripcion}</p>
                 <p className="text-xs text-muted-foreground">{intervencion.equipoSnapshot.codigoInterno}</p>
               </div>
               <div>
-                <p className="font-bold text-muted-foreground uppercase text-[10px]">Técnico Responsable</p>
-                <p className="font-medium">{intervencion.tecnicoSnapshot.displayName}</p>
+                <p className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Técnico Responsable</p>
+                <p className="font-medium text-base">{intervencion.tecnicoSnapshot.displayName}</p>
                 <p className="text-xs text-muted-foreground">{formatDate(intervencion.fechaInicio as any, 'PPp')}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="font-bold text-sm">Trabajo Realizado:</p>
-              <div className="p-4 border rounded-md bg-white italic text-sm leading-relaxed">
+              <p className="font-bold text-sm flex items-center gap-2">
+                <FileText className="w-4 h-4 text-primary" /> 
+                Resumen del Trabajo Realizado:
+              </p>
+              <div className="p-4 border rounded-md bg-white italic text-sm leading-relaxed shadow-sm">
                 {intervencion.trabajoRealizado || 'Sin descripción detallada.'}
               </div>
             </div>
 
             {intervencion.locked ? (
-              <div className="flex flex-col items-center justify-center py-8 border-2 border-dashed border-green-200 bg-green-50 rounded-lg">
-                <CheckCircle2 className="h-12 w-12 text-green-500 mb-2" />
-                <p className="font-bold text-green-700">SERVICIO FIRMADO Y CERTIFICADO</p>
-                <p className="text-xs text-green-600 mt-1">El documento ha sido bloqueado para auditoría.</p>
-                <Button className="mt-6" asChild>
-                   <a href={`/api/intervenciones/${id}/pdf?token=${token}`} target="_blank">
-                    <Download className="mr-2 h-4 w-4" /> Descargar Copia Certificada
-                  </a>
-                </Button>
+              <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-green-200 bg-green-50 rounded-lg">
+                <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
+                <p className="font-bold text-green-700 text-lg uppercase tracking-tight">SERVICIO FIRMADO Y CERTIFICADO</p>
+                <p className="text-sm text-green-600 mt-1">Este expediente ha sido sellado y no admite modificaciones.</p>
+                <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full px-6">
+                  <Button className="flex-1 h-12 text-lg font-bold" asChild>
+                    <a href={`/api/intervenciones/${id}/pdf?token=${token}`} target="_blank">
+                      <Download className="mr-2 h-5 w-5" /> Descargar PDF Oficial
+                    </a>
+                  </Button>
+                </div>
               </div>
             ) : (
-              <div className="space-y-6">
+              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">Nombre del Responsable</label>
-                    <Input value={signerName} onChange={(e) => setSignerName(e.target.value)} placeholder="Ej: Juan Pérez" />
+                    <label className="text-sm font-semibold text-secondary">Nombre del Responsable</label>
+                    <Input 
+                      value={signerName} 
+                      onChange={(e) => setSignerName(e.target.value)} 
+                      placeholder="Ej: Juan Pérez" 
+                      className="h-12 text-base"
+                    />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-medium">DNI / Documento</label>
-                    <Input value={signerDni} onChange={(e) => setSignerDni(e.target.value)} placeholder="Solo números" />
+                    <label className="text-sm font-semibold text-secondary">DNI / Documento</label>
+                    <Input 
+                      value={signerDni} 
+                      onChange={(e) => setSignerDni(e.target.value)} 
+                      placeholder="Solo números" 
+                      className="h-12 text-base"
+                    />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-medium">Firma de Conformidad</label>
+                  <label className="text-sm font-semibold text-secondary">Firma de Conformidad</label>
                   <SignaturePad onSave={setSignature} onClear={() => setSignature(null)} />
                 </div>
 
                 <Button 
-                  className="w-full h-14 text-lg font-bold" 
+                  className="w-full h-16 text-xl font-black shadow-xl hover:shadow-primary/20 transition-all" 
                   disabled={isSubmitting || !signature || !signerName || !signerDni}
                   onClick={handleSign}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin mr-2" /> : <FileText className="mr-2" />}
-                  CERTIFICAR Y FINALIZAR
+                  {isSubmitting ? <Loader2 className="animate-spin mr-2 h-6 w-6" /> : <ShieldCheck className="mr-2 h-6 w-6" />}
+                  CERTIFICAR Y CERRAR EXPEDIENTE
                 </Button>
+                <p className="text-[10px] text-center text-muted-foreground">
+                  Al presionar este botón, usted certifica la recepción conforme del servicio industrial realizado por MEPROCENT.
+                </p>
               </div>
             )}
           </CardContent>
         </Card>
         
-        <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest">
-          MEPROCENT SOLUCIONES INDUSTRIALES - Sistema de Gestión de Calidad
+        <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
+          MEPROCENT SOLUCIONES INDUSTRIALES - SISTEMA DE GESTIÓN DE CALIDAD ISO 9001
         </p>
       </div>
     </div>
