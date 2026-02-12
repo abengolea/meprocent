@@ -97,33 +97,27 @@ export default function PublicInterventionPage() {
                 <CardDescription>Expediente N° {intervencion.numeroIntervencion}</CardDescription>
               </div>
               {intervencion.locked && (
-                <div className="flex items-center gap-2 text-green-600 font-bold text-sm bg-green-50 px-3 py-1 rounded-full border border-green-200">
-                  <ShieldCheck className="w-4 h-4" />
-                  CERTIFICADO
-                </div>
+                <Badge variant="secondary" className="bg-green-100 text-green-800"><ShieldCheck className="w-3 h-3 mr-1"/> CERTIFICADO</Badge>
               )}
             </div>
           </CardHeader>
           <CardContent className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-muted/50 p-4 rounded-lg border border-border">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4 text-sm bg-muted/50 p-4 rounded-lg">
               <div>
-                <p className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Equipo / Activo</p>
-                <p className="font-medium text-base">{intervencion.equipoSnapshot.descripcion}</p>
+                <p className="font-bold text-muted-foreground uppercase text-[10px]">Equipo / Activo</p>
+                <p className="font-medium">{intervencion.equipoSnapshot.descripcion}</p>
                 <p className="text-xs text-muted-foreground">{intervencion.equipoSnapshot.codigoInterno}</p>
               </div>
               <div>
-                <p className="font-bold text-muted-foreground uppercase text-[10px] tracking-wider">Técnico Responsable</p>
-                <p className="font-medium text-base">{intervencion.tecnicoSnapshot.displayName}</p>
+                <p className="font-bold text-muted-foreground uppercase text-[10px]">Técnico Responsable</p>
+                <p className="font-medium">{intervencion.tecnicoSnapshot.displayName}</p>
                 <p className="text-xs text-muted-foreground">{formatDate(intervencion.fechaInicio as any, 'PPp')}</p>
               </div>
             </div>
 
             <div className="space-y-2">
-              <p className="font-bold text-sm flex items-center gap-2">
-                <FileText className="w-4 h-4 text-primary" /> 
-                Resumen del Trabajo Realizado:
-              </p>
-              <div className="p-4 border rounded-md bg-white italic text-sm leading-relaxed shadow-sm">
+              <p className="font-bold text-sm flex items-center gap-2"><FileText className="w-4 h-4 text-primary" /> Trabajo Realizado:</p>
+              <div className="p-4 border rounded-md bg-white italic text-sm">
                 {intervencion.trabajoRealizado || 'Sin descripción detallada.'}
               </div>
             </div>
@@ -131,63 +125,43 @@ export default function PublicInterventionPage() {
             {intervencion.locked ? (
               <div className="flex flex-col items-center justify-center py-10 border-2 border-dashed border-green-200 bg-green-50 rounded-lg">
                 <CheckCircle2 className="h-16 w-16 text-green-500 mb-4" />
-                <p className="font-bold text-green-700 text-lg uppercase tracking-tight">SERVICIO FIRMADO Y CERTIFICADO</p>
-                <p className="text-sm text-green-600 mt-1">Este expediente ha sido sellado y no admite modificaciones.</p>
-                <div className="flex flex-col sm:flex-row gap-3 mt-8 w-full px-6">
-                  <Button className="flex-1 h-12 text-lg font-bold" asChild>
-                    <a href={`/api/intervenciones/${id}/pdf?token=${token}`} target="_blank">
-                      <Download className="mr-2 h-5 w-5" /> Descargar PDF Oficial
-                    </a>
-                  </Button>
-                </div>
+                <p className="font-bold text-green-700 uppercase">SERVICIO FIRMADO Y CERTIFICADO</p>
+                <Button className="mt-8" asChild>
+                  <a href={`/api/intervenciones/${id}/pdf?token=${token}`} target="_blank">
+                    <Download className="mr-2 h-5 w-5" /> Descargar PDF Oficial
+                  </a>
+                </Button>
               </div>
             ) : (
-              <div className="space-y-6 animate-in fade-in slide-in-from-bottom-4 duration-500">
+              <div className="space-y-6">
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-secondary">Nombre del Responsable</label>
-                    <Input 
-                      value={signerName} 
-                      onChange={(e) => setSignerName(e.target.value)} 
-                      placeholder="Ej: Juan Pérez" 
-                      className="h-12 text-base"
-                    />
+                    <label className="text-sm font-semibold">Nombre del Responsable</label>
+                    <Input value={signerName} onChange={(e) => setSignerName(e.target.value)} placeholder="Ej: Juan Pérez" />
                   </div>
                   <div className="space-y-2">
-                    <label className="text-sm font-semibold text-secondary">DNI / Documento</label>
-                    <Input 
-                      value={signerDni} 
-                      onChange={(e) => setSignerDni(e.target.value)} 
-                      placeholder="Solo números" 
-                      className="h-12 text-base"
-                    />
+                    <label className="text-sm font-semibold">DNI / Documento</label>
+                    <Input value={signerDni} onChange={(e) => setSignerDni(e.target.value)} placeholder="Solo números" />
                   </div>
                 </div>
                 
                 <div className="space-y-2">
-                  <label className="text-sm font-semibold text-secondary">Firma de Conformidad</label>
+                  <label className="text-sm font-semibold">Firma de Conformidad</label>
                   <SignaturePad onSave={setSignature} onClear={() => setSignature(null)} />
                 </div>
 
                 <Button 
-                  className="w-full h-16 text-xl font-black shadow-xl hover:shadow-primary/20 transition-all" 
+                  className="w-full h-14 text-lg font-bold" 
                   disabled={isSubmitting || !signature || !signerName || !signerDni}
                   onClick={handleSign}
                 >
-                  {isSubmitting ? <Loader2 className="animate-spin mr-2 h-6 w-6" /> : <ShieldCheck className="mr-2 h-6 w-6" />}
-                  CERTIFICAR Y CERRAR EXPEDIENTE
+                  {isSubmitting ? <Loader2 className="animate-spin mr-2 h-5 w-5" /> : <ShieldCheck className="mr-2 h-5 w-5" />}
+                  CERTIFICAR SERVICIO
                 </Button>
-                <p className="text-[10px] text-center text-muted-foreground">
-                  Al presionar este botón, usted certifica la recepción conforme del servicio industrial realizado por MEPROCENT.
-                </p>
               </div>
             )}
           </CardContent>
         </Card>
-        
-        <p className="text-center text-[10px] text-muted-foreground uppercase tracking-widest font-bold">
-          MEPROCENT SOLUCIONES INDUSTRIALES - SISTEMA DE GESTIÓN DE CALIDAD ISO 9001
-        </p>
       </div>
     </div>
   );

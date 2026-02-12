@@ -95,7 +95,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
             refId: insumo.id,
             name: insumo.name,
             internalCode: insumo.internalCode,
-            qty: 1, // Por defecto
+            qty: 1,
             unit: 'gr/ml',
         };
 
@@ -209,7 +209,7 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                                     defaultValue={intervencion.trabajoRealizado} 
                                     disabled={isLocked} 
                                     rows={8} 
-                                    placeholder="Describa paso a paso las tareas realizadas, sectores cubiertos y hallazgos relevantes..." 
+                                    placeholder="Describa paso a paso las tareas realizadas..." 
                                     className="resize-none"
                                 />
                             </div>
@@ -222,12 +222,12 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                         <CardHeader className="flex flex-row items-center justify-between">
                             <div>
                                 <CardTitle className="text-lg">Control de Insumos Químicos</CardTitle>
-                                <CardDescription>Trazabilidad obligatoria por códigos internos MEPROCENT.</CardDescription>
+                                <CardDescription>Trazabilidad por códigos internos MEPROCENT.</CardDescription>
                             </div>
                             {!isLocked && (
                                 <div className="flex gap-2">
                                     <Select value={selectedInsumoId} onValueChange={setSelectedInsumoId}>
-                                        <SelectTrigger className="w-[200px]"><SelectValue placeholder="Código M01..." /></SelectTrigger>
+                                        <SelectTrigger className="w-[200px]"><SelectValue placeholder="Código..." /></SelectTrigger>
                                         <SelectContent>
                                             {insumos.map(i => (
                                                 <SelectItem key={i.id} value={i.id}>{i.internalCode} - {i.name}</SelectItem>
@@ -239,24 +239,20 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
                             )}
                         </CardHeader>
                         <CardContent>
-                            <div className="border rounded-lg overflow-hidden shadow-sm">
+                            <div className="border rounded-lg overflow-hidden">
                                 <table className="w-full text-sm text-left">
                                     <thead className="bg-secondary text-secondary-foreground font-bold">
-                                        <tr>
-                                            <th className="p-3">Código</th>
-                                            <th className="p-3">Producto / Registro</th>
-                                            <th className="p-3 text-right">Cantidad</th>
-                                        </tr>
+                                        <tr><th className="p-3">Código</th><th className="p-3">Producto</th><th className="p-3 text-right">Cantidad</th></tr>
                                     </thead>
-                                    <tbody className="bg-white">
+                                    <tbody>
                                         {intervencion.consumptions?.length ? intervencion.consumptions.map((c, i) => (
-                                            <tr key={i} className="border-t hover:bg-muted/20 transition-colors">
-                                                <td className="p-3 font-mono text-primary font-black">{c.internalCode}</td>
+                                            <tr key={i} className="border-t">
+                                                <td className="p-3 font-mono font-bold text-primary">{c.internalCode}</td>
                                                 <td className="p-3">{c.name}</td>
-                                                <td className="p-3 text-right font-medium">{c.qty} {c.unit}</td>
+                                                <td className="p-3 text-right">{c.qty} {c.unit}</td>
                                             </tr>
                                         )) : (
-                                            <tr><td colSpan={3} className="p-12 text-center text-muted-foreground italic bg-muted/10">No se han registrado consumos químicos en este expediente.</td></tr>
+                                            <tr><td colSpan={3} className="p-12 text-center text-muted-foreground italic">No hay consumos registrados.</td></tr>
                                         )}
                                     </tbody>
                                 </table>
@@ -267,62 +263,31 @@ export function PestControlDossier({ intervencion }: PestControlDossierProps) {
 
                 <TabsContent value="evidencia">
                     <Card><CardContent className="py-20 text-center text-muted-foreground flex flex-col items-center gap-4">
-                        <div className="p-4 bg-muted rounded-full">
-                            <ImageIcon className="w-12 h-12 opacity-30" />
-                        </div>
-                        <div className="space-y-1">
-                            <p className="font-bold text-secondary">Registro Fotográfico de Evidencia</p>
-                            <p className="text-xs max-w-xs mx-auto">Las fotos Before/After se almacenan bajo cifrado AES-256 en Firebase Storage restringido.</p>
-                        </div>
-                        {!isLocked && <Button variant="outline"><ImageIcon className="w-4 h-4 mr-2"/> Cargar Nueva Foto</Button>}
+                        <ImageIcon className="w-12 h-12 opacity-30" />
+                        <p className="font-bold">Registro Fotográfico</p>
+                        {!isLocked && <Button variant="outline"><ImageIcon className="w-4 h-4 mr-2"/> Cargar Foto</Button>}
                     </CardContent></Card>
                 </TabsContent>
 
                 <TabsContent value="conformidad">
                     <Card>
-                        <CardHeader>
-                            <CardTitle className="text-lg">Certificación Digital y Cierre</CardTitle>
-                            <CardDescription>La firma del cliente bloquea el expediente permanentemente para auditoría.</CardDescription>
-                        </CardHeader>
+                        <CardHeader><CardTitle className="text-lg">Certificación Digital</CardTitle></CardHeader>
                         <CardContent className="space-y-6">
-                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                                <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">Nombre del Responsable</label>
-                                    <p className="font-bold text-base">{intervencion.signature?.name || 'Pendiente de firma'}</p>
-                                </div>
-                                <div className="space-y-2 p-3 bg-muted/30 rounded-lg">
-                                    <label className="text-[10px] font-black uppercase tracking-widest text-muted-foreground">DNI / Documento</label>
-                                    <p className="font-bold text-base">{intervencion.signature?.dni || 'Pendiente de firma'}</p>
-                                </div>
-                            </div>
-                            
                             {isLocked ? (
-                                <div className="border rounded-xl p-8 bg-green-50/50 flex flex-col items-center border-green-200 shadow-inner">
-                                    {intervencion.signature?.image && (
-                                        <div className="bg-white p-4 rounded-lg shadow-sm border mb-6">
-                                            <img src={intervencion.signature.image} alt="Firma Digital" className="max-h-32" />
-                                        </div>
-                                    )}
-                                    <div className="text-center space-y-2">
-                                        <p className="font-black text-green-700 uppercase tracking-tighter text-xl">EXPEDIENTE CERTIFICADO</p>
-                                        <p className="text-[10px] text-green-600 uppercase font-bold tracking-widest">Sello de Tiempo: {intervencion.closedAt ? formatDate(intervencion.closedAt as any, 'PPPPp') : 'N/A'}</p>
-                                    </div>
-                                    <Button variant="default" className="mt-8 h-12 px-8 font-bold text-lg shadow-lg" asChild>
+                                <div className="border rounded-xl p-8 bg-green-50 flex flex-col items-center border-green-200">
+                                    {intervencion.signature?.image && <img src={intervencion.signature.image} alt="Firma" className="max-h-32 mb-6" />}
+                                    <p className="font-black text-green-700 text-xl uppercase">EXPEDIENTE CERTIFICADO</p>
+                                    <Button variant="default" className="mt-8" asChild>
                                         <a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">
-                                            <Download className="w-5 h-5 mr-2" />
-                                            Descargar Reporte PDF Certificado
+                                            <Download className="w-5 h-5 mr-2" /> Descargar PDF
                                         </a>
                                     </Button>
                                 </div>
                             ) : (
-                                <div className="text-center py-12 border-2 border-dashed rounded-xl bg-muted/5">
+                                <div className="text-center py-12 border-2 border-dashed rounded-xl">
                                     <ShieldCheck className="w-12 h-12 mx-auto text-muted-foreground mb-4 opacity-20" />
-                                    <p className="text-sm font-medium text-secondary mb-6">La firma debe realizarse desde el Portal de Cliente para validez legal.</p>
-                                    <Button variant="outline" className="h-12 px-6 font-bold border-2" onClick={() => {
-                                        const url = `${window.location.origin}/p/${intervencion.id}?token=${intervencion.token}`;
-                                        window.open(url, '_blank');
-                                    }}>
-                                        Abrir Portal de Firma del Cliente
+                                    <Button variant="outline" onClick={() => window.open(`/p/${intervencion.id}?token=${intervencion.token}`, '_blank')}>
+                                        Abrir Portal de Firma
                                     </Button>
                                 </div>
                             )}

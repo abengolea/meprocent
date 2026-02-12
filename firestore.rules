@@ -2,7 +2,7 @@ rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
 
-    // --- FUNCIONES DE AYUDA ---
+    // --- FUNCIONES DE SEGURIDAD CORE ---
     function isSignedIn() {
       return request.auth != null;
     }
@@ -67,14 +67,14 @@ service cloud.firestore {
     }
 
     match /intervenciones/{id} {
-      // Permitir GET público para el portal de firma (la seguridad reside en el ID y el token)
+      // Permitir GET público para el portal de firma (seguridad por ID y Token)
       allow get: if true;
       
       allow list: if isSignedIn() && inCompany(resource.data.empresaId);
       
       allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
       
-      // Bloquear actualización si el documento está locked
+      // Bloquear actualización si el documento está locked (excepto para firmar)
       allow update: if (isSignedIn() && inCompany(resource.data.empresaId) && isNotLocked(id))
                     || (request.resource.data.diff(resource.data).affectedKeys().hasOnly(['signature', 'locked', 'estado', 'closedAt']));
 
@@ -83,7 +83,7 @@ service cloud.firestore {
       // Subcolecciones protegidas por empresa e inmutabilidad
       match /audit/{auditId} {
         allow read: if isSignedIn() && inCompany(interventionDoc(id).empresaId);
-        allow create: if (isSignedIn() && inCompany(interventionDoc(id).empresaId)) || true;
+        allow create: if (isSignedIn() && inCompany(interventionDoc(id).empresaId)) || true; // Permitir log de firma pública
         allow update, delete: if false; 
       }
 
