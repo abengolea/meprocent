@@ -64,18 +64,18 @@ export default function LoginPage() {
       setAuthError('dominio_no_autorizado');
       message = 'Este dominio no está autorizado en la consola de Firebase.';
     } else if (error.code === 'auth/popup-blocked') {
-      message = 'El navegador bloqueó la ventana emergente. Por favor, permite las ventanas emergentes para este sitio e intenta de nuevo.';
+      message = 'El navegador bloqueó la ventana emergente. Por favor, habilita las ventanas emergentes e intenta de nuevo.';
+    } else if (error.code === 'auth/popup-closed-by-user') {
+      message = 'La ventana de inicio de sesión fue cerrada antes de completar el proceso.';
     } else if (error.code === 'auth/user-not-found' || error.code === 'auth/wrong-password' || error.code === 'auth/invalid-credential') {
       message = 'Email o contraseña incorrectos.';
-    } else if (error.code === 'auth/popup-closed-by-user') {
-      message = 'La ventana de inicio de sesión fue cerrada.';
     } else {
       message = error.message || 'No se pudo iniciar sesión.';
     }
 
     toast({
       variant: 'destructive',
-      title: 'Error de Inicio de Sesión',
+      title: 'Aviso de Acceso',
       description: message,
     });
   };
@@ -126,7 +126,7 @@ export default function LoginPage() {
 
   return (
     <div className="flex min-h-screen items-center justify-center bg-secondary p-4">
-      <Card className="w-full max-w-sm shadow-2xl border-none">
+      <Card className="w-full max-sm shadow-2xl border-none">
         <CardHeader className="text-center pb-2">
           <div className="mb-6 flex flex-col justify-center items-center gap-4">
             <MeprocentLogo className="h-24 w-24" />
