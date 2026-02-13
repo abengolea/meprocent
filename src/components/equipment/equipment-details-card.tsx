@@ -15,7 +15,7 @@ export function EquipmentDetailsCard({ equipo }: EquipmentDetailsCardProps) {
         { icon: Tag, label: "N° de Serie", value: equipo.numeroSerie || 'No especificado' },
         { icon: Calendar, label: "Fecha de Instalación", value: equipo.fechaInstalacion ? formatDate(equipo.fechaInstalacion) : 'No especificado' },
         { icon: ShieldCheck, label: "Garantía hasta", value: equipo.garantiaHasta ? formatDate(equipo.garantiaHasta) : 'No especificado' },
-        { icon: Building, label: "Ubicación", value: `${equipo.ubicacion.planta} - ${equipo.ubicacion.sector}` },
+        { icon: Building, label: "Ubicación", value: equipo.ubicacion ? `${equipo.ubicacion.planta} - ${equipo.ubicacion.sector}` : 'No especificado' },
     ];
     
     const techSpecs = equipo.caracteristicasTecnicas ? Object.entries(equipo.caracteristicasTecnicas) : [];

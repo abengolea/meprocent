@@ -10,15 +10,16 @@ import { Button } from "@/components/ui/button";
 
 interface QrCodeCardProps {
     equipo: Equipo;
+    basePath?: string;
 }
 
-export function QrCodeCard({ equipo }: QrCodeCardProps) {
+export function QrCodeCard({ equipo, basePath = '/mantenimiento/equipos' }: QrCodeCardProps) {
     const [qrValue, setQrValue] = useState('');
 
     useEffect(() => {
-        const url = `${window.location.origin}/equipment/${equipo.id}`;
+        const url = `${window.location.origin}${basePath}/${equipo.id}`;
         setQrValue(url);
-    }, [equipo.id]);
+    }, [equipo.id, basePath]);
     
     const handlePrint = () => {
       const printWindow = window.open('', '_blank');

@@ -70,6 +70,7 @@ export interface Intervencion {
   solicitante?: string;
   numeroAviso?: string;
   descripcionProblema?: string;
+  evidence?: { url: string; caption?: string; uploadedAt?: string }[];
 }
 
 export interface AuditLog {
@@ -78,4 +79,54 @@ export interface AuditLog {
   userId: string;
   userName: string;
   payload?: Record<string, any>;
+}
+
+export interface Equipo {
+  id?: string;
+  codigoInterno: string;
+  descripcion: string;
+  tipoEquipo: string;
+  estadoActual: 'operativo' | 'fuera_de_servicio' | 'en_reparacion' | 'en_mantenimiento';
+  empresaId: string;
+  ubicacion: { planta: string; sector: string };
+  qrCodeId?: string;
+  fabricante?: string;
+  modelo?: string;
+  numeroSerie?: string;
+  fechaInstalacion?: Date | Timestamp | string;
+  garantiaHasta?: Date | Timestamp | string;
+  caracteristicasTecnicas?: Record<string, string>;
+  proximoMantenimiento?: { fechaProgramada: Date | Timestamp | string };
+  planesAsociados?: string[];
+}
+
+export interface Empresa {
+  id: string;
+  razonSocial: string;
+  nombreComercial?: string;
+  activa: boolean;
+}
+
+export interface PlanMantenimiento {
+  id: string;
+  nombrePlan: string;
+  frecuencia: { valor: number; tipo: string };
+}
+
+export interface Alarma {
+  id: string;
+  titulo: string;
+  equipoId?: string;
+  severidad: string;
+  estado: string;
+  tipoAlarma?: string;
+  fecha?: Date | Timestamp;
+  numeroAlarma?: string;
+  equipoSnapshot?: { codigoInterno: string; descripcion: string; ubicacion?: string };
+  fechaGeneracion?: Date | Timestamp;
+  fechaLimiteAtencion?: Date | Timestamp;
+  generadoPor?: string;
+  mensaje?: string;
+  empresaId?: string;
+  tecnicoAsignadoId?: string;
 }

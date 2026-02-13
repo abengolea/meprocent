@@ -10,8 +10,9 @@ import { Badge } from "@/components/ui/badge";
 import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { useToast } from "@/hooks/use-toast";
 import { Intervencion, Insumo, Consumption } from "@/lib/types";
-import { useFirestore, useUser } from "@/firebase";
+import { useFirestore, useUser, useStorage } from "@/firebase";
 import { doc, updateDoc, serverTimestamp, collection, getDocs, query, where, arrayUnion } from "firebase/firestore";
+import { ref, uploadBytes, getDownloadURL } from "firebase/storage";
 import { writeAuditLog } from "@/lib/audit";
 import { 
     ClipboardList, 
@@ -27,20 +28,27 @@ import {
     Download,
     ExternalLink,
     ShieldCheck
-} from "lucide-center";
+} from "lucide-react";
 import { formatDate } from "@/lib/utils";
 
 export function PestControlDossier({ intervencion }: { intervencion: Intervencion & { id: string } }) {
     const { toast } = useToast();
     const db = useFirestore();
+    const storage = useStorage();
     const { profile } = useUser();
     
     const [activeTab, setActiveTab] = React.useState("solicitud");
     const [isSaving, setIsSaving] = React.useState(false);
     const [insumos, setInsumos] = React.useState<Insumo[]>([]);
     const [selectedInsumoId, setSelectedInsumoId] = React.useState<string>("");
+    const [evidence, setEvidence] = React.useState<{ url: string; caption?: string }[]>(intervencion.evidence || []);
+    const [uploading, setUploading] = React.useState(false);
 
     const isLocked = intervencion.locked === true;
+
+    React.useEffect(() => {
+        setEvidence(intervencion.evidence || []);
+    }, [intervencion.evidence]);
 
     React.useEffect(() => {
         async function fetchInsumos() {
@@ -92,6 +100,33 @@ export function PestControlDossier({ intervencion }: { intervencion: Intervencio
         } catch (e) { toast({ variant: "destructive", title: "Error", description: "No se pudo registrar." }); }
     };
 
+    const handlePhotoUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file || !storage || !db || isLocked) return;
+        if (!file.type.startsWith('image/')) {
+            toast({ variant: "destructive", title: "Error", description: "Solo se permiten imágenes." });
+            return;
+        }
+        setUploading(true);
+        try {
+            const path = `intervenciones/${intervencion.id}/evidence/${Date.now()}-${file.name}`;
+            const storageRef = ref(storage, path);
+            await uploadBytes(storageRef, file);
+            const url = await getDownloadURL(storageRef);
+            const newEvidence = { url, caption: "", uploadedAt: new Date().toISOString() };
+            await updateDoc(doc(db, 'intervenciones', intervencion.id), {
+                evidence: arrayUnion(newEvidence)
+            });
+            setEvidence(prev => [...prev, newEvidence]);
+            toast({ title: "Foto subida", description: "La evidencia ha sido guardada." });
+        } catch (err: any) {
+            toast({ variant: "destructive", title: "Error", description: err?.message || "No se pudo subir la foto." });
+        } finally {
+            setUploading(false);
+            e.target.value = '';
+        }
+    };
+
     return (
         <div className="space-y-6">
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -127,7 +162,7 @@ export function PestControlDossier({ intervencion }: { intervencion: Intervencio
                             <p className="text-sm font-bold">Link para el Cliente</p>
                         </div>
                         <Button variant="outline" size="sm" onClick={() => {
-                            const url = `${window.location.origin}/p/${intervencion.id}?token=${intervencion.token}`;
+                            const url = `${window.location.origin}/certificar/${intervencion.id}?token=${intervencion.token}`;
                             navigator.clipboard.writeText(url);
                             toast({ title: "Link copiado" });
                         }}>Copiar URL</Button>
@@ -193,7 +228,41 @@ export function PestControlDossier({ intervencion }: { intervencion: Intervencio
                 </TabsContent>
 
                 <TabsContent value="evidencia">
-                    <Card><CardContent className="py-20 text-center"><ImageIcon className="w-12 h-12 mx-auto opacity-20" /><p>Módulo de fotos próximamente.</p></CardContent></Card>
+                    <Card>
+                        <CardHeader>
+                            <CardTitle className="text-lg">Fotos de Evidencia</CardTitle>
+                            <CardDescription>Documente el trabajo realizado con fotografías.</CardDescription>
+                        </CardHeader>
+                        <CardContent>
+                            {!isLocked && (
+                                <div className="mb-6">
+                                    <label className="inline-flex items-center justify-center gap-2 px-4 py-2 border border-dashed rounded-lg cursor-pointer hover:bg-muted/50 transition-colors">
+                                        <input type="file" accept="image/*" className="hidden" onChange={handlePhotoUpload} disabled={uploading} />
+                                        {uploading ? <Loader2 className="w-4 h-4 animate-spin" /> : <ImageIcon className="w-4 h-4" />}
+                                        <span>{uploading ? "Subiendo..." : "Agregar foto"}</span>
+                                    </label>
+                                </div>
+                            )}
+                            {evidence.length > 0 ? (
+                                <div className="grid grid-cols-2 md:grid-cols-3 gap-4">
+                                    {evidence.map((item, i) => (
+                                        <div key={i} className="relative group rounded-lg overflow-hidden border">
+                                            <a href={item.url} target="_blank" rel="noopener noreferrer" className="block aspect-square">
+                                                <img src={item.url} alt={item.caption || `Evidencia ${i + 1}`} className="w-full h-full object-cover" />
+                                            </a>
+                                            {item.caption && <p className="p-2 text-xs text-muted-foreground truncate">{item.caption}</p>}
+                                        </div>
+                                    ))}
+                                </div>
+                            ) : (
+                                <div className="py-12 text-center text-muted-foreground">
+                                    <ImageIcon className="w-12 h-12 mx-auto opacity-30 mb-2" />
+                                    <p>No hay fotos de evidencia.</p>
+                                    {!isLocked && <p className="text-sm mt-1">Use el botón arriba para agregar fotos.</p>}
+                                </div>
+                            )}
+                        </CardContent>
+                    </Card>
                 </TabsContent>
 
                 <TabsContent value="conformidad">
@@ -205,7 +274,7 @@ export function PestControlDossier({ intervencion }: { intervencion: Intervencio
                                 <Button asChild><a href={`/api/intervenciones/${intervencion.id}/pdf?token=${intervencion.token}`} target="_blank">PDF Oficial</a></Button>
                             </div>
                         ) : (
-                            <Button variant="outline" onClick={() => window.open(`/p/${intervencion.id}?token=${intervencion.token}`, '_blank')}>Abrir Portal de Firma</Button>
+                            <Button variant="outline" onClick={() => window.open(`/certificar/${intervencion.id}?token=${intervencion.token}`, '_blank')}>Abrir Portal de Firma</Button>
                         )}
                     </CardContent></Card>
                 </TabsContent>

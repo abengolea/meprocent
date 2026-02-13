@@ -28,7 +28,7 @@ export async function generateMetadata({ params }: Props): Promise<Metadata> {
   }
 
   return {
-    title: `${empresa.nombreComercial || empresa.razonSocial} | MaintWise`,
+    title: `${empresa.nombreComercial || empresa.razonSocial} | MEPROCENT`,
     description: `Detalles de la empresa ${empresa.nombreComercial}.`,
   };
 }
@@ -85,7 +85,7 @@ async function EquiposTab({ empresaId }: { empresaId: string }) {
   return (
     <Card>
       <CardHeader>
-        <CardTitle>Equipos en {empresaId === 'empresa-1' ? 'MaintWise Demo' : empresaId}</CardTitle>
+        <CardTitle>Equipos en {empresaId === 'empresa-1' ? 'MEPROCENT Demo' : empresaId}</CardTitle>
         <CardDescription>
           Listado de todos los equipos registrados para esta empresa.
         </CardDescription>

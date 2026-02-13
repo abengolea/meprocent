@@ -21,7 +21,12 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
         setIsClient(true);
     }, []);
 
-    const sortedAlarms = alarmas.sort((a, b) => new Date(b.fechaGeneracion).getTime() - new Date(a.fechaGeneracion).getTime());
+    const toDate = (d: unknown) => (d && typeof d === 'object' && 'toMillis' in d ? (d as { toMillis: () => number }).toMillis() : d);
+    const sortedAlarms = [...alarmas].sort((a, b) => {
+        const da = a.fechaGeneracion || a.fecha;
+        const db = b.fechaGeneracion || b.fecha;
+        return new Date(toDate(db) || 0).getTime() - new Date(toDate(da) || 0).getTime();
+    });
 
     const getSeverityVariant = (severity: Alarma['severidad']) => {
         switch (severity) {
@@ -43,7 +48,7 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
     }
 
     const handleRowClick = (alarmId: string) => {
-        router.push(`/alarms/${alarmId}`);
+        router.push(`/alarmas/${alarmId}`);
     };
     
     if (!isClient) {
@@ -81,15 +86,15 @@ export function AlarmsTable({ alarmas }: AlarmsTableProps) {
                             onClick={() => handleRowClick(alarma.id)}
                             className="cursor-pointer hover:bg-muted/50"
                         >
-                            <TableCell className="font-medium">{alarma.numeroAlarma}</TableCell>
+                            <TableCell className="font-medium">{alarma.numeroAlarma || alarma.id}</TableCell>
                             <TableCell>{alarma.titulo}</TableCell>
-                            <TableCell>{alarma.equipoSnapshot.descripcion}</TableCell>
+                            <TableCell>{alarma.equipoSnapshot?.descripcion || (alarma.equipoId ? '—' : '—')}</TableCell>
                             <TableCell>
                                 <Badge variant={getSeverityVariant(alarma.severidad)}>
                                     {capitalize(alarma.severidad)}
                                 </Badge>
                             </TableCell>
-                            <TableCell>{formatDate(alarma.fechaGeneracion)}</TableCell>
+                            <TableCell>{formatDate(alarma.fechaGeneracion || alarma.fecha)}</TableCell>
                              <TableCell>
                                 <Badge variant={getStatusVariant(alarma.estado)}>
                                     {capitalize(alarma.estado.replace('_', ' '))}

@@ -1,4 +1,3 @@
-
 "use client";
 
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table";
@@ -8,20 +7,23 @@ import { Intervencion } from "@/lib/types";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Wrench } from "lucide-react";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface EquipmentInterventionsHistoryProps {
     intervenciones: Intervencion[];
+    basePath?: string;
 }
 
-export function EquipmentInterventionsHistory({ intervenciones }: EquipmentInterventionsHistoryProps) {
+export function EquipmentInterventionsHistory({ intervenciones, basePath = '/mantenimiento/intervenciones' }: EquipmentInterventionsHistoryProps) {
     const [isClient, setIsClient] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
     }, []);
-    
-    const sortedInterventions = intervenciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
-    
+
+    const sortedInterventions = [...intervenciones].sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
+
     if (!isClient) {
         return null;
     }
@@ -46,14 +48,18 @@ export function EquipmentInterventionsHistory({ intervenciones }: EquipmentInter
                         </TableHeader>
                         <TableBody>
                             {sortedInterventions.map((intervencion) => (
-                                <TableRow key={intervencion.id}>
-                                    <TableCell className="font-medium">{intervencion.numeroIntervencion}</TableCell>
+                                <TableRow
+                                    key={intervencion.id}
+                                    className="cursor-pointer hover:bg-muted/50"
+                                    onClick={() => intervencion.id && router.push(`${basePath}/${intervencion.id}`)}
+                                >
+                                    <TableCell className="font-medium text-primary hover:underline">{intervencion.numeroIntervencion}</TableCell>
                                     <TableCell>{capitalize(intervencion.tipoIntervencion)}</TableCell>
                                     <TableCell>{formatDate(intervencion.fechaInicio)}</TableCell>
                                     <TableCell>{intervencion.tecnicoSnapshot.displayName}</TableCell>
                                     <TableCell>
-                                        <Badge variant={intervencion.estadoCierre === 'cerrada' ? 'secondary' : 'default'}>
-                                            {capitalize(intervencion.estadoCierre.replace('_', ' '))}
+                                        <Badge variant={intervencion.estado === 'cerrada' ? 'secondary' : 'default'}>
+                                            {capitalize((intervencion.estado || 'en_progreso').replace(/_/g, ' '))}
                                         </Badge>
                                     </TableCell>
                                 </TableRow>

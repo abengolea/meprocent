@@ -4,7 +4,7 @@ import { EmpresaForm } from "@/components/empresas/empresa-form";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 
 export const metadata: Metadata = {
-    title: "Nueva Empresa | MaintWise",
+    title: "Nueva Empresa | MEPROCENT",
     description: "Agregar una nueva empresa o cliente al sistema.",
 };
 

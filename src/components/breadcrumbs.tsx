@@ -9,7 +9,7 @@ import { cn } from '@/lib/utils';
 
 export function Breadcrumbs() {
   const pathname = usePathname();
-  if (pathname === '/dashboard') return null;
+  if (pathname === '/tablero') return null;
 
   const segments = pathname.split('/').filter(Boolean);
 
@@ -25,8 +25,8 @@ export function Breadcrumbs() {
 
   return (
     <nav aria-label="Breadcrumb" className="hidden md:flex items-center space-x-2 text-sm">
-      <Link href="/dashboard" className="text-muted-foreground hover:text-foreground">
-        Dashboard
+      <Link href="/tablero" className="text-muted-foreground hover:text-foreground">
+        Tablero
       </Link>
       {breadcrumbs.map((breadcrumb, index) => (
         <Fragment key={breadcrumb.href}>

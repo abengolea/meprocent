@@ -60,6 +60,28 @@ service cloud.firestore {
       allow write: if hasRole('admin') || isSuperAdmin();
     }
 
+    function alarmaDoc(id) {
+      return get(/databases/$(database)/documents/alarmas/$(id)).data;
+    }
+
+    match /alarmas/{alarmaId} {
+      allow read: if isSignedIn() && (isSuperAdmin() || inCompany(resource.data.empresaId));
+      allow create: if isSignedIn() && inCompany(request.resource.data.empresaId);
+      allow update: if isSignedIn() && inCompany(resource.data.empresaId);
+      allow delete: if false;
+
+      match /historial/{historialId} {
+        allow read: if isSignedIn() && (isSuperAdmin() || inCompany(alarmaDoc(alarmaId).empresaId));
+        allow create: if isSignedIn() && (isSuperAdmin() || inCompany(alarmaDoc(alarmaId).empresaId));
+        allow update, delete: if false;
+      }
+    }
+
+    match /planes/{planId} {
+      allow read: if isSignedIn();
+      allow write: if hasRole('admin') || isSuperAdmin();
+    }
+
     match /intervenciones/{id} {
       allow get: if true; // Portal público validado por token en app
       allow list: if isSignedIn() && inCompany(resource.data.empresaId);

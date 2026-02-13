@@ -34,7 +34,7 @@ export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: Stats
             icon: HardHat,
             value: operativos,
             description: `de ${equipos.length} equipos totales`,
-            href: "/equipment?status=operativo",
+            href: "/mantenimiento/equipos?status=operativo",
             textColor: ""
         },
         {
@@ -42,7 +42,7 @@ export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: Stats
             icon: Wrench,
             value: intervencionesMes,
             description: `desde el ${formatDate(startOfCurrentMonth, 'dd/MM/yyyy')}`,
-            href: "/interventions",
+            href: "/mantenimiento/intervenciones",
             textColor: ""
         },
         {
@@ -50,7 +50,7 @@ export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: Stats
             icon: Siren,
             value: alarmasActivas,
             description: "Requieren atención inmediata",
-            href: "/alarms?status=activas",
+            href: "/alarmas?status=activas",
             textColor: alarmasActivas > 0 ? "text-destructive" : ""
         },
         {
@@ -58,7 +58,7 @@ export function StatsCards({ equipos, alarmas, intervenciones, usuarios }: Stats
             icon: Users,
             value: `${tecnicosActivos}/${tecnicos.length}`,
             description: "Usuarios con rol de técnico",
-            href: "/users?role=tecnico",
+            href: "/usuarios?role=tecnico",
             textColor: ""
         }
     ]

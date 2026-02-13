@@ -4,7 +4,9 @@
 import { useEffect, useState, useRef } from 'react';
 import { useRouter, useParams } from 'next/navigation';
 import { getEquipoById } from '@/lib/mock-data';
-import type { Equipo } from '@/lib/types';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
+import type { Equipo, Intervencion } from '@/lib/types';
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/components/ui/card';
 import { Button } from '@/components/ui/button';
 import { Skeleton } from '@/components/ui/skeleton';
@@ -13,41 +15,36 @@ import { QrCode, HardHat, ChevronLeft, ShieldAlert } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { Separator } from '@/components/ui/separator';
 
-
 export default function VerificarEquipoPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
+    const db = useFirestore();
     const [equipo, setEquipo] = useState<Equipo | null>(null);
-    const [loading, setLoading] = useState(true);
     const [hasCameraPermission, setHasCameraPermission] = useState<boolean | null>(null);
     const videoRef = useRef<HTMLVideoElement>(null);
-    
-    // El id del equipo lo obtenemos del path, no de la intervención.
-    // Esto es un atajo para el prototipo.
-    const equipoId = Array.isArray(params.id) ? params.id[0] : params.id;
-    const intervencionId = `int-mock-${equipoId}`;
+
+    const intervencionId = Array.isArray(params.id) ? params.id[0] : params.id;
+    const docRef = db && intervencionId ? doc(db, 'intervenciones', intervencionId) : null;
+    const { data: intervencion, loading } = useDoc<Intervencion>(docRef);
 
     useEffect(() => {
-        const fetchEquipo = async () => {
-            if (equipoId) {
-                setLoading(true);
-                const fetchedEquipo = await getEquipoById(equipoId);
-                if (fetchedEquipo) {
-                    setEquipo(fetchedEquipo);
-                } else {
-                    toast({
-                        variant: "destructive",
-                        title: "Error",
-                        description: "No se encontró el equipo para esta intervención."
-                    });
-                    router.back();
-                }
-                setLoading(false);
+        async function fetchEquipo() {
+            if (!intervencion?.equipoId) return;
+            const fetchedEquipo = await getEquipoById(intervencion.equipoId);
+            if (fetchedEquipo) {
+                setEquipo(fetchedEquipo);
+            } else {
+                toast({
+                    variant: "destructive",
+                    title: "Error",
+                    description: "No se encontró el equipo para esta intervención."
+                });
+                router.back();
             }
-        };
+        }
         fetchEquipo();
-    }, [equipoId, router, toast]);
+    }, [intervencion?.equipoId, router, toast]);
 
     // Simula la apertura de la cámara
     const handleScanQR = async () => {
@@ -84,7 +81,7 @@ export default function VerificarEquipoPage() {
         router.push(`/tecnico/trabajo/${intervencionId}/formulario`);
     }
 
-    if (loading || !equipo) {
+    if (loading || !intervencion || !equipo) {
         return (
              <div className="p-4 space-y-4">
                 <Skeleton className="h-8 w-48" />

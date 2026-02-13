@@ -32,11 +32,13 @@ import { cn } from "@/lib/utils";
 import { formatDate } from "@/lib/utils";
 import type { Equipo } from "@/lib/types";
 import { Separator } from "../ui/separator";
+import { useUser, useFirestore } from "@/firebase";
+import { collection, addDoc, doc, updateDoc } from "firebase/firestore";
 
 const equipmentFormSchema = z.object({
   codigoInterno: z.string().min(3, "El código debe tener al menos 3 caracteres."),
   descripcion: z.string().min(5, "La descripción es muy corta."),
-  tipoEquipo: z.enum(['tablero_electrico', 'motor', 'bomba', 'ups', 'transformador', 'otro'], {
+  tipoEquipo: z.enum(['tablero_electrico', 'motor', 'bomba', 'ups', 'transformador', 'trampa', 'cebadera', 'otro'], {
     required_error: "Debe seleccionar un tipo de equipo.",
   }),
   fabricante: z.string().optional(),
@@ -57,6 +59,7 @@ type EquipmentFormValues = z.infer<typeof equipmentFormSchema>;
 
 interface EquipmentFormProps {
   equipo?: Equipo;
+  basePath?: string;
 }
 
 const tiposDeEquipo = [
@@ -65,19 +68,22 @@ const tiposDeEquipo = [
     { value: 'tablero_electrico', label: 'Tablero Eléctrico' },
     { value: 'ups', label: 'UPS' },
     { value: 'transformador', label: 'Transformador' },
+    { value: 'trampa', label: 'Trampa (Fumigación)' },
+    { value: 'cebadera', label: 'Cebadera (Fumigación)' },
     { value: 'otro', label: 'Otro' },
 ]
 
-export function EquipmentForm({ equipo }: EquipmentFormProps) {
+export function EquipmentForm({ equipo, basePath = '/equipos' }: EquipmentFormProps) {
   const router = useRouter();
   const { toast } = useToast();
+  const { profile } = useUser();
+  const db = useFirestore();
   const [loading, setLoading] = useState(false);
   const [isClient, setIsClient] = useState(false);
   const isEditMode = !!equipo;
-  
-  // Asumimos que el usuario pertenece a la empresa 'empresa-1'
-  const userEmpresaId = 'empresa-1';
-  const userEmpresaName = 'MaintWise Demo';
+
+  const userEmpresaId = profile?.empresaId ?? 'default';
+  const userEmpresaName = profile?.empresaId === 'meprocent-admin' ? 'MEPROCENT Global' : profile?.empresaId ?? 'Empresa';
 
   useEffect(() => {
     setIsClient(true);
@@ -86,8 +92,8 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   const defaultValues = isEditMode ? {
     ...equipo,
     empresa: userEmpresaName,
-    planta: equipo.ubicacion.planta,
-    sector: equipo.ubicacion.sector,
+    planta: equipo.ubicacion?.planta ?? 'Planta Principal',
+    sector: equipo.ubicacion?.sector ?? '',
     fechaInstalacion: equipo.fechaInstalacion ? new Date(equipo.fechaInstalacion as string) : undefined,
     garantiaHasta: equipo.garantiaHasta ? new Date(equipo.garantiaHasta as string) : undefined,
     potencia: equipo.caracteristicasTecnicas?.potencia || "",
@@ -111,42 +117,54 @@ export function EquipmentForm({ equipo }: EquipmentFormProps) {
   });
 
   async function onSubmit(data: EquipmentFormValues) {
-    setLoading(true);
-    
-    // Agrupar características técnicas y ubicación
-    const { potencia, voltaje, corriente, planta, sector, ...restOfData } = data;
-    const caracteristicasTecnicas = { potencia, voltaje, corriente };
-    const ubicacion = { planta, sector };
-    
-    const finalData = { ...restOfData, caracteristicasTecnicas, ubicacion };
-
-    if (isEditMode) {
-      console.log("Datos del equipo a actualizar:", { ...equipo, ...finalData });
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast({
-        title: "Equipo Actualizado",
-        description: `El equipo ${data.descripcion} ha sido actualizado.`,
-      });
-      router.push(`/equipment/${equipo.id}`);
-      router.refresh(); // Forzar la actualización de la página de detalles
-    } else {
-      const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
-      const newData = { ...finalData, qrCodeId, empresaId: userEmpresaId };
-      // Remove empresa name from final data object
-      // @ts-ignore
-      delete newData.empresa;
-
-
-      console.log("Datos del nuevo equipo:", newData);
-      await new Promise(resolve => setTimeout(resolve, 1500));
-      toast({
-        title: "Equipo Creado",
-        description: `El equipo ${data.descripcion} ha sido agregado al inventario.`,
-      });
-      router.push("/equipment");
+    if (!db || !profile) {
+      toast({ variant: "destructive", title: "Error", description: "Debe iniciar sesión para guardar equipos." });
+      return;
     }
-    
-    setLoading(false);
+
+    setLoading(true);
+    try {
+      const { potencia, voltaje, corriente, planta, sector, empresa, ...restOfData } = data;
+      const caracteristicasTecnicas = { potencia: potencia ?? "", voltaje: voltaje ?? "", corriente: corriente ?? "" };
+      const ubicacion = { planta, sector };
+
+      const payload: Record<string, unknown> = {
+        codigoInterno: restOfData.codigoInterno,
+        descripcion: restOfData.descripcion,
+        tipoEquipo: restOfData.tipoEquipo,
+        caracteristicasTecnicas,
+        ubicacion,
+        empresaId: userEmpresaId,
+        estadoActual: (equipo?.estadoActual ?? "operativo") as Equipo["estadoActual"],
+      };
+
+      if (restOfData.fabricante) payload.fabricante = restOfData.fabricante;
+      if (restOfData.modelo) payload.modelo = restOfData.modelo;
+      if (restOfData.numeroSerie) payload.numeroSerie = restOfData.numeroSerie;
+      if (data.fechaInstalacion) payload.fechaInstalacion = data.fechaInstalacion;
+      if (data.garantiaHasta) payload.garantiaHasta = data.garantiaHasta;
+
+      if (isEditMode && equipo?.id) {
+        await updateDoc(doc(db, "equipos", equipo.id), payload);
+        toast({ title: "Equipo Actualizado", description: `El equipo ${data.descripcion} ha sido actualizado.` });
+        router.push(`${basePath}/${equipo.id}`);
+      } else {
+        const qrCodeId = `qr-${data.codigoInterno.toLowerCase()}-${Math.random().toString(36).substring(2, 9)}`;
+        await addDoc(collection(db, "equipos"), { ...payload, qrCodeId });
+        toast({ title: "Equipo Creado", description: `El equipo ${data.descripcion} ha sido agregado al inventario.` });
+        router.push(basePath);
+      }
+      router.refresh();
+    } catch (err: any) {
+      console.error(err);
+      toast({
+        variant: "destructive",
+        title: "Error al guardar",
+        description: err?.message ?? "No se pudo guardar el equipo. Verifique permisos.",
+      });
+    } finally {
+      setLoading(false);
+    }
   }
 
   return (

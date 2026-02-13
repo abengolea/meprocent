@@ -25,7 +25,7 @@ export function RecentInterventions({ intervenciones }: RecentInterventionsProps
                     <CardDescription>Últimos trabajos de mantenimiento registrados.</CardDescription>
                 </div>
                 <Button asChild variant="ghost" size="sm">
-                    <Link href="/interventions">Ver todas</Link>
+                    <Link href="/mantenimiento/intervenciones">Ver todas</Link>
                 </Button>
             </CardHeader>
             <CardContent>
@@ -34,7 +34,7 @@ export function RecentInterventions({ intervenciones }: RecentInterventionsProps
                         {recentInterventions.map(intervencion => (
                             <li key={intervencion.id} className="flex items-start gap-4">
                                 <div className="mt-1">
-                                    {intervencion.estadoCierre === 'cerrada' ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Clock className="h-5 w-5 text-yellow-500" />}
+                                    {intervencion.estado === 'cerrada' ? <CheckCircle className="h-5 w-5 text-green-500" /> : <Clock className="h-5 w-5 text-yellow-500" />}
                                 </div>
                                 <div className="flex-1">
                                     <p className="font-medium leading-tight">{intervencion.equipoSnapshot.descripcion}</p>

@@ -7,7 +7,9 @@ import * as z from "zod";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { useEffect, useState, useRef } from 'react';
 
-import { getEquipoById, getIntervenciones, getPlanes } from '@/lib/mock-data';
+import { getEquipoById, getPlanes } from '@/lib/mock-data';
+import { useDoc, useFirestore } from '@/firebase';
+import { doc } from 'firebase/firestore';
 import type { Equipo, Intervencion, PlanMantenimiento } from '@/lib/types';
 import { generateWorkReport } from "@/ai/flows/generate-work-report-flow";
 
@@ -94,24 +96,51 @@ export default function FormularioTrabajoPage() {
     const router = useRouter();
     const params = useParams();
     const { toast } = useToast();
+    const db = useFirestore();
     const intervencionId = Array.isArray(params.id) ? params.id[0] : params.id;
 
-    const [intervencion, setIntervencion] = useState<Intervencion | null>(null);
+    const docRef = db && intervencionId ? doc(db, 'intervenciones', intervencionId) : null;
+    const { data: intervencion, loading } = useDoc<Intervencion>(docRef);
+
     const [equipo, setEquipo] = useState<Equipo | null>(null);
     const [plan, setPlan] = useState<PlanMantenimiento | null>(null);
-    const [loading, setLoading] = useState(true);
     const [isAiLoading, setIsAiLoading] = useState<"problemaDetectado" | "trabajoRealizado" | "observaciones" | null>(null);
+
+    useEffect(() => {
+        async function fetchEquipoAndPlan() {
+            if (!intervencion?.equipoId) return;
+            const fetchedEquipo = await getEquipoById(intervencion.equipoId);
+            setEquipo(fetchedEquipo || null);
+            const planId = (intervencion as any).planMantenimientoId;
+            if (planId) {
+                const planes = await getPlanes();
+                setPlan(planes.find((p) => p.id === planId) || null);
+            }
+        }
+        fetchEquipoAndPlan();
+    }, [intervencion?.equipoId, intervencion]);
 
     const form = useForm<z.infer<typeof formSchema>>({
         resolver: zodResolver(formSchema),
         defaultValues: {
-            problemaDetectado: "",
-            trabajoRealizado: "",
+            problemaDetectado: intervencion?.descripcionProblema ?? "",
+            trabajoRealizado: intervencion?.trabajoRealizado ?? "",
             estadoEquipoFinal: "operativo",
             observaciones: ""
         },
     });
-    
+
+    useEffect(() => {
+        if (intervencion) {
+            form.reset({
+                problemaDetectado: intervencion.descripcionProblema ?? "",
+                trabajoRealizado: intervencion.trabajoRealizado ?? "",
+                estadoEquipoFinal: "operativo",
+                observaciones: ""
+            });
+        }
+    }, [intervencion?.id]);
+
     const handleAiAssist = async (fieldName: "problemaDetectado" | "trabajoRealizado" | "observaciones") => {
         const keywords = form.getValues(fieldName);
         if (!keywords || keywords.trim().length < 5) {
@@ -148,25 +177,10 @@ export default function FormularioTrabajoPage() {
     };
 
     useEffect(() => {
-        const fetchData = async () => {
-            setLoading(true);
-            const todasIntervenciones = await getIntervenciones();
-            const interv = todasIntervenciones.find(i => i.id === 'int-progress-1');
-            if (interv) {
-                setIntervencion(interv);
-                const fetchedEquipo = await getEquipoById(interv.equipoId);
-                setEquipo(fetchedEquipo || null);
-                if (interv.planMantenimientoId) {
-                    const todosPlanes = await getPlanes();
-                    setPlan(todosPlanes.find(p => p.id === interv.planMantenimientoId) || null);
-                }
-            } else {
-                 toast({ variant: "destructive", title: "Error", description: "Intervención no encontrada." });
-            }
-            setLoading(false);
-        };
-        fetchData();
-    }, [intervencionId, toast]);
+        if (!loading && intervencionId && !intervencion) {
+            toast({ variant: "destructive", title: "Error", description: "Intervención no encontrada." });
+        }
+    }, [loading, intervencionId, intervencion, toast]);
 
     const onSubmit = (data: z.infer<typeof formSchema>) => {
         console.log(data);
@@ -175,7 +189,7 @@ export default function FormularioTrabajoPage() {
     
     const handleFinalizar = () => {
         toast({ title: "Trabajo Finalizado", description: "Enviado a aprobación del supervisor." });
-        router.push("/dashboard");
+        router.push("/tablero");
     }
 
     if (loading || !intervencion || !equipo) {
@@ -250,11 +264,11 @@ export default function FormularioTrabajoPage() {
                     )}
                 />
 
-                {plan?.checklistTareas && (
+                {(plan as any)?.checklistTareas && (
                     <Card>
                         <CardContent className="pt-6 space-y-4">
                              <h3 className="text-base font-semibold">✅ Checklist</h3>
-                            {plan.checklistTareas.map(tarea => (
+                            {(plan as any).checklistTareas.map((tarea: { id: string; descripcion: string }) => (
                                 <div key={tarea.id} className="flex items-center space-x-2">
                                     <Checkbox id={`tarea-${tarea.id}`} />
                                     <label htmlFor={`tarea-${tarea.id}`} className="text-sm font-medium leading-none peer-disabled:cursor-not-allowed peer-disabled:opacity-70">

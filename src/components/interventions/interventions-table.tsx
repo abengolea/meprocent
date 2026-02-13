@@ -7,13 +7,16 @@ import { capitalize, formatDate } from "@/lib/utils";
 import type { Intervencion } from "@/lib/types";
 import { Card } from "@/components/ui/card";
 import React, { useState, useEffect } from "react";
+import { useRouter } from "next/navigation";
 
 interface InterventionsTableProps {
     intervenciones: Intervencion[];
+    basePath?: string;
 }
 
-export function InterventionsTable({ intervenciones }: InterventionsTableProps) {
+export function InterventionsTable({ intervenciones, basePath = '/intervenciones' }: InterventionsTableProps) {
     const [isClient, setIsClient] = useState(false);
+    const router = useRouter();
 
     useEffect(() => {
         setIsClient(true);
@@ -21,11 +24,13 @@ export function InterventionsTable({ intervenciones }: InterventionsTableProps) 
 
     const sortedInterventions = intervenciones.sort((a, b) => new Date(b.fechaInicio).getTime() - new Date(a.fechaInicio).getTime());
 
-    const getStatusVariant = (status: Intervencion['estadoCierre']) => {
-        switch (status) {
-            case 'abierta': return 'default';
+    const getStatusVariant = (estado: Intervencion['estado']) => {
+        switch (estado) {
             case 'cerrada': return 'outline';
-            case 'pendiente_aprobacion': return 'secondary';
+            case 'aprobada': return 'secondary';
+            case 'completada_tecnico': return 'secondary';
+            case 'en_progreso': return 'default';
+            case 'asignada': return 'default';
             default: return 'secondary';
         }
     }
@@ -60,15 +65,15 @@ export function InterventionsTable({ intervenciones }: InterventionsTableProps) 
                 </TableHeader>
                 <TableBody>
                     {sortedInterventions.map((intervencion) => (
-                        <TableRow key={intervencion.id}>
-                            <TableCell className="font-medium">{intervencion.numeroIntervencion}</TableCell>
+                        <TableRow key={intervencion.id} className="cursor-pointer hover:bg-muted/50" onClick={() => router.push(`${basePath}/${intervencion.id}`)}>
+                            <TableCell className="font-medium text-primary hover:underline">{intervencion.numeroIntervencion}</TableCell>
                             <TableCell>{intervencion.equipoSnapshot.descripcion}</TableCell>
                             <TableCell>{capitalize(intervencion.tipoIntervencion)}</TableCell>
                             <TableCell>{intervencion.tecnicoSnapshot.displayName}</TableCell>
                             <TableCell>{formatDate(intervencion.fechaInicio)}</TableCell>
                             <TableCell>
-                                <Badge variant={getStatusVariant(intervencion.estadoCierre)}>
-                                    {capitalize(intervencion.estadoCierre.replace('_', ' '))}
+                                <Badge variant={getStatusVariant(intervencion.estado)}>
+                                    {capitalize(intervencion.estado.replace(/_/g, ' '))}
                                 </Badge>
                             </TableCell>
                         </TableRow>

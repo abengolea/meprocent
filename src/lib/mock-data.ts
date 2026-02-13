@@ -17,11 +17,16 @@ export const getInsumos = async (): Promise<Insumo[]> => {
 };
 
 export const getAlarms = async (): Promise<Alarma[]> => {
-  // Las alarmas se implementarán en una fase posterior como colección
-  return [];
+  if (!db) return [];
+  const snap = await getDocs(query(collection(db, 'alarmas')));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as Alarma));
 };
 
-export const getAlarmById = async (id: string) => undefined;
+export const getAlarmById = async (id: string): Promise<Alarma | undefined> => {
+  if (!db) return undefined;
+  const d = await getDoc(doc(db, 'alarmas', id));
+  return d.exists() ? ({ id: d.id, ...d.data() } as Alarma) : undefined;
+};
 
 export const getEquipos = async (): Promise<Equipo[]> => {
   if (!db) return [];
@@ -47,7 +52,11 @@ export const getIntervencionById = async (id: string): Promise<Intervencion | un
   return d.exists() ? { id: d.id, ...d.data() } as Intervencion : undefined;
 };
 
-export const getPlanes = async (): Promise<PlanMantenimiento[]> => [];
+export const getPlanes = async (): Promise<PlanMantenimiento[]> => {
+  if (!db) return [];
+  const snap = await getDocs(collection(db, 'planes'));
+  return snap.docs.map(d => ({ id: d.id, ...d.data() } as PlanMantenimiento));
+};
 
 export const getEmpresas = async (): Promise<Empresa[]> => {
   if (!db) return [];

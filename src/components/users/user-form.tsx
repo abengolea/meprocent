@@ -77,7 +77,7 @@ export function UserForm() {
       description: `El usuario ${data.displayName} ha sido creado con éxito.`,
     });
 
-    router.push("/users");
+    router.push("/usuarios");
     setLoading(false);
   }
 

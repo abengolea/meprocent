@@ -25,14 +25,17 @@ import {
 import { Textarea } from "@/components/ui/textarea";
 import { useToast } from "@/hooks/use-toast";
 import { useRouter } from "next/navigation";
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import { Loader2, Wrench, Bug, FileText, Lock } from "lucide-react";
-import { useFirestore, useUser } from "@/firebase";
-import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc } from "firebase/firestore";
+import { useFirestore, useUser, useCollection } from "@/firebase";
+import { collection, addDoc, serverTimestamp, doc, getDoc, updateDoc, query, where } from "firebase/firestore";
 import { writeAuditLog } from "@/lib/audit";
 import type { Intervencion, Equipo } from "@/lib/types";
 import { Skeleton } from "../ui/skeleton";
 import { Card, CardContent, CardHeader, CardTitle } from "../ui/card";
+
+const TIPOS_MANTENIMIENTO = ['motor', 'bomba', 'tablero_electrico', 'ups', 'transformador', 'otro'];
+const TIPOS_FUMIGACION = ['trampa', 'cebadera'];
 
 const interventionFormSchema = z.object({
   vertical: z.enum(['maintenance', 'pest_control']),
@@ -48,16 +51,21 @@ type InterventionFormValues = z.infer<typeof interventionFormSchema>;
 interface InterventionFormProps {
   intervention?: Intervencion & { id: string };
   equipoId?: string | null;
+  alarmId?: string | null;
+  defaultVertical?: 'maintenance' | 'pest_control';
+  redirectBasePath?: string;
 }
 
-export function InterventionForm({ intervention, equipoId: initialEquipoId }: InterventionFormProps) {
+export function InterventionForm({ intervention, equipoId: initialEquipoId, alarmId, defaultVertical, redirectBasePath }: InterventionFormProps) {
   const router = useRouter();
   const { toast } = useToast();
   const db = useFirestore();
   const { profile } = useUser();
   const [loading, setLoading] = useState(true);
   const [equipo, setEquipo] = useState<Equipo | null>(null);
-  const [step, setStep] = useState<'vertical' | 'form'>(intervention ? 'form' : 'vertical');
+  const [step, setStep] = useState<'vertical' | 'form'>(
+    intervention || defaultVertical ? 'form' : 'vertical'
+  );
   const [isClosing, setIsClosing] = useState(false);
 
   const isLocked = intervention?.locked === true;
@@ -72,19 +80,35 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
         trabajoRealizado: intervention.trabajoRealizado,
         tecnicoAsignadoId: intervention.tecnicoId
     } : {
-      vertical: 'maintenance',
+      vertical: defaultVertical || 'maintenance',
       prioridad: 'normal',
-      tipoIntervencion: 'correctivo',
+      tipoIntervencion: defaultVertical === 'pest_control' ? 'desinsectacion' : 'correctivo',
       trabajoRealizado: '',
       tecnicoAsignadoId: profile?.id || '',
     },
   });
 
+  const vertical = form.watch('vertical') || defaultVertical || 'maintenance';
+  const equiposQuery = useMemo(() => {
+    if (!db || !profile) return null;
+    if (profile.role === 'super_admin') {
+      return query(collection(db, 'equipos'));
+    }
+    return query(collection(db, 'equipos'), where('empresaId', '==', profile.empresaId));
+  }, [db, profile]);
+
+  const { data: equiposRaw } = useCollection<Equipo>(equiposQuery);
+  const equiposDisponibles = useMemo(() => {
+    if (!equiposRaw) return [];
+    const tipos = vertical === 'pest_control' ? TIPOS_FUMIGACION : TIPOS_MANTENIMIENTO;
+    return equiposRaw.filter((e) => tipos.includes(e.tipoEquipo));
+  }, [equiposRaw, vertical]);
+
   useEffect(() => {
     async function fetchData() {
       if (!db) return;
       setLoading(true);
-      
+
       const targetId = intervention?.equipoId || initialEquipoId;
       if (targetId) {
         const equipoDoc = await getDoc(doc(db, 'equipos', targetId));
@@ -100,8 +124,17 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
     fetchData();
   }, [db, initialEquipoId, intervention, form]);
 
+  const handleEquipoSelect = (equipoId: string) => {
+    const eq = equiposDisponibles.find((e) => e.id === equipoId);
+    if (eq) {
+      setEquipo({ ...eq, id: equipoId });
+      form.setValue('equipoId', equipoId);
+    }
+  };
+
   const onSubmit = async (data: InterventionFormValues) => {
-    if (!db || !profile || !equipo || isLocked) return;
+    const equipoToUse = equipo || (data.equipoId && equiposDisponibles.find((e) => e.id === data.equipoId));
+    if (!db || !profile || !equipoToUse || isLocked) return;
 
     setIsClosing(true);
     try {
@@ -110,11 +143,11 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
         locked: false,
         token: intervention?.token || Math.random().toString(36).substring(2, 15),
         numeroIntervencion: intervention?.numeroIntervencion || `INT-${Date.now().toString().slice(-6)}`,
-        equipoId: equipo.id,
+        equipoId: equipoToUse.id!,
         equipoSnapshot: {
-          codigoInterno: equipo.codigoInterno,
-          descripcion: equipo.descripcion,
-          ubicacion: `${equipo.ubicacion.planta} - ${equipo.ubicacion.sector}`,
+          codigoInterno: equipoToUse.codigoInterno,
+          descripcion: equipoToUse.descripcion,
+          ubicacion: `${equipoToUse.ubicacion.planta} - ${equipoToUse.ubicacion.sector}`,
         },
         tipoIntervencion: data.tipoIntervencion,
         tecnicoId: profile.id,
@@ -146,7 +179,7 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
       });
 
       toast({ title: "Éxito", description: "Intervención guardada." });
-      router.push("/interventions");
+      router.push(redirectBasePath || "/intervenciones");
     } catch (e) {
       toast({ variant: "destructive", title: "Error", description: "Fallo al guardar." });
     } finally {
@@ -191,6 +224,49 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
   return (
     <Form {...form}>
       <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-8 max-w-4xl">
+        {!equipo && (
+          <FormField
+            control={form.control}
+            name="equipoId"
+            render={({ field }) => (
+              <FormItem>
+                <FormLabel>Equipo</FormLabel>
+                <Select
+                  onValueChange={(v) => {
+                    field.onChange(v);
+                    handleEquipoSelect(v);
+                  }}
+                  value={field.value}
+                >
+                  <FormControl>
+                    <SelectTrigger><SelectValue placeholder="Seleccione un equipo" /></SelectTrigger>
+                  </FormControl>
+                  <SelectContent>
+                    {equiposDisponibles.map((eq) => (
+                      <SelectItem key={eq.id} value={eq.id!}>
+                        {eq.codigoInterno} — {eq.descripcion}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
+                <FormDescription>
+                  {equiposDisponibles.length === 0
+                    ? 'No hay equipos de este tipo registrados. Registre equipos primero.'
+                    : 'Seleccione el equipo sobre el que realizará la intervención.'}
+                </FormDescription>
+                <FormMessage />
+              </FormItem>
+            )}
+          />
+        )}
+
+        {equipo && (
+          <div className="rounded-lg border p-4 bg-muted/30">
+            <p className="text-sm font-medium text-muted-foreground">Equipo seleccionado</p>
+            <p className="font-medium">{equipo.codigoInterno} — {equipo.descripcion}</p>
+          </div>
+        )}
+
         <div className="grid grid-cols-1 md:grid-cols-2 gap-8">
           <FormField
             control={form.control}
@@ -247,7 +323,7 @@ export function InterventionForm({ intervention, equipoId: initialEquipoId }: In
         />
 
         <div className="flex justify-between gap-2">
-          {!intervention && <Button type="button" variant="outline" onClick={() => setStep('vertical')}>Cambiar Vertical</Button>}
+          {!intervention && !defaultVertical && <Button type="button" variant="outline" onClick={() => setStep('vertical')}>Cambiar Vertical</Button>}
           <Button type="submit" disabled={isClosing}>
             {isClosing && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
             {intervention ? 'Guardar Cambios' : 'Iniciar Intervención'}

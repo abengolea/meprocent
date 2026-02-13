@@ -13,9 +13,10 @@ import React, { useState, useEffect } from "react";
 
 interface EquipmentTableProps {
     equipos: Equipo[];
+    basePath?: string;
 }
 
-export function EquipmentTable({ equipos }: EquipmentTableProps) {
+export function EquipmentTable({ equipos, basePath = '/equipos' }: EquipmentTableProps) {
     const [isClient, setIsClient] = useState(false);
 
     useEffect(() => {
@@ -65,7 +66,7 @@ export function EquipmentTable({ equipos }: EquipmentTableProps) {
                             <TableCell className="font-medium">{equipo.codigoInterno}</TableCell>
                             <TableCell>{equipo.descripcion}</TableCell>
                             <TableCell>{capitalize(equipo.tipoEquipo.replace('_', ' '))}</TableCell>
-                            <TableCell>{equipo.ubicacion.planta} - {equipo.ubicacion.sector}</TableCell>
+                            <TableCell>{equipo.ubicacion?.planta ?? 'N/A'} - {equipo.ubicacion?.sector ?? 'N/A'}</TableCell>
                             <TableCell>
                                 <Badge variant={getStatusVariant(equipo.estadoActual)}>
                                     {capitalize(equipo.estadoActual.replace(/_/g, ' '))}
@@ -76,7 +77,7 @@ export function EquipmentTable({ equipos }: EquipmentTableProps) {
                             </TableCell>
                             <TableCell className="text-right">
                                 <Button asChild variant="ghost" size="icon">
-                                    <Link href={`/equipment/${equipo.id}`}>
+                                    <Link href={`${basePath}/${equipo.id}`}>
                                         <ChevronRight className="h-4 w-4" />
                                         <span className="sr-only">Ver detalles</span>
                                     </Link>

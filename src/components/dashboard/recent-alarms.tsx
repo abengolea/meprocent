@@ -13,9 +13,10 @@ interface RecentAlarmsProps {
 }
 
 export function RecentAlarms({ alarms }: RecentAlarmsProps) {
+    const toDate = (d: unknown) => (d && typeof d === 'object' && 'toMillis' in d ? (d as { toMillis: () => number }).toMillis() : d);
     const recentAlarms = alarms
         .filter(a => a.estado === 'pendiente' || a.estado === 'en_progreso')
-        .sort((a, b) => new Date(b.fechaGeneracion).getTime() - new Date(a.fechaGeneracion).getTime())
+        .sort((a, b) => new Date(toDate(b.fechaGeneracion) || 0).getTime() - new Date(toDate(a.fechaGeneracion) || 0).getTime())
         .slice(0, 5);
         
     const getSeverityVariant = (severity: Alarma['severidad']) => {
@@ -36,7 +37,7 @@ export function RecentAlarms({ alarms }: RecentAlarmsProps) {
                     <CardDescription>Alertas que requieren atención prioritaria.</CardDescription>
                 </div>
                 <Button asChild variant="ghost" size="sm">
-                    <Link href="/alarms">Ver todas</Link>
+                    <Link href="/alarmas">Ver todas</Link>
                 </Button>
             </CardHeader>
             <CardContent>
@@ -47,14 +48,14 @@ export function RecentAlarms({ alarms }: RecentAlarmsProps) {
                                 <AlertTriangle className="h-5 w-5 text-muted-foreground" />
                                 <div className="flex-1">
                                     <p className="font-medium leading-none">{alarma.titulo}</p>
-                                    <p className="text-sm text-muted-foreground">{alarma.equipoSnapshot.descripcion}</p>
+                                    <p className="text-sm text-muted-foreground">{alarma.equipoSnapshot?.descripcion || '—'}</p>
                                 </div>
                                 <div className="text-right">
                                     <Badge variant={getSeverityVariant(alarma.severidad)}>{capitalize(alarma.severidad)}</Badge>
                                     <p className="text-xs text-muted-foreground mt-1">{formatDate(alarma.fechaGeneracion, "dd MMM")}</p>
                                 </div>
                                 <Button variant="ghost" size="icon" className="h-8 w-8" asChild>
-                                    <Link href="/alarms"><ChevronRight className="h-4 w-4" /></Link>
+                                    <Link href={`/alarmas/${alarma.id}`}><ChevronRight className="h-4 w-4" /></Link>
                                 </Button>
                             </li>
                         ))}

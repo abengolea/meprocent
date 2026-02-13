@@ -30,13 +30,13 @@ export function PlansList({ planes }: PlansListProps) {
                             <ClipboardList className="h-6 w-6 text-primary flex-shrink-0 mt-1"/>
                             <span>{plan.nombrePlan}</span>
                         </CardTitle>
-                        <CardDescription>{plan.descripcion}</CardDescription>
+                        <CardDescription>{(plan as any).descripcion || `Cada ${plan.frecuencia.valor} ${plan.frecuencia.tipo}`}</CardDescription>
                     </CardHeader>
                     <CardContent className="flex-grow">
                         <div className="space-y-3 text-sm">
                              <div className="flex items-center gap-3">
                                 <Users className="h-4 w-4 text-muted-foreground" />
-                                <span>Aplica a: {capitalize(plan.aplicabilidad.tipoEquipo?.join(', ').replace(/_/g, ' ') || 'N/A')}</span>
+                                <span>Aplica a: {capitalize((plan as any).aplicabilidad?.tipoEquipo?.join(', ')?.replace(/_/g, ' ') || 'Todos')}</span>
                             </div>
                              <div className="flex items-center gap-3">
                                 <Clock className="h-4 w-4 text-muted-foreground" />

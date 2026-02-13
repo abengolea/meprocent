@@ -39,7 +39,7 @@ export default function LoginPage() {
     setAuthError(null);
     try {
       await signInEmail(values.email, values.password);
-      router.push('/dashboard');
+      router.push('/tablero');
     } catch (error: any) {
       toast({ variant: 'destructive', title: 'Error', description: 'Credenciales inválidas.' });
     } finally { setLoading(false); }
@@ -50,7 +50,7 @@ export default function LoginPage() {
     setAuthError(null);
     try {
       await signInGoogle();
-      router.push('/dashboard');
+      router.push('/tablero');
     } catch (error: any) {
       console.error("Auth Error:", error.code, error.message);
       if (error.code === 'auth/unauthorized-domain') {
@@ -79,7 +79,7 @@ export default function LoginPage() {
               <AlertCircle className="h-4 w-4" />
               <AlertTitle>Dominio no autorizado</AlertTitle>
               <AlertDescription className="space-y-2">
-                <p className="text-xs">Para que el login de Google funcione, debes agregar este dominio en tu Consola de Firebase (Auth > Settings > Authorized domains):</p>
+                <p className="text-xs">Para que el login de Google funcione, debes agregar este dominio en tu Consola de Firebase (Auth {'>'} Settings {'>'} Authorized domains):</p>
                 <div className="flex items-center gap-2 bg-black/10 p-2 rounded text-[10px]">
                   <code className="flex-1">{currentHost}</code>
                   <Button variant="ghost" size="icon" onClick={() => { navigator.clipboard.writeText(currentHost); setCopied(true); setTimeout(() => setCopied(false), 2000); }}>
