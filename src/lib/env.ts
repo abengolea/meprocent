@@ -21,12 +21,13 @@ export function validateEnv() {
     .map(([key]) => key);
 
   if (missing.length > 0) {
-    const errorMsg = `Faltan variables de entorno esenciales: ${missing.join(', ')}`;
-    if (typeof window === 'undefined') {
-      // Color rojo en consola de servidor
-      console.error('\x1b[31m%s\x1b[0m', 'ERROR FATAL: ' + errorMsg);
-    } else {
-      console.error('Firebase Error: ' + errorMsg);
-    }
+    const errorMsg = `Faltan variables de entorno de Firebase: ${missing.join(', ')}. Creá .env.local (ver .env.example).`;
+    console.warn(errorMsg);
+    return false;
   }
+  return true;
+}
+
+export function hasFirebaseEnv() {
+  return Object.values(env).every(Boolean);
 }

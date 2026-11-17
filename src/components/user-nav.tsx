@@ -25,7 +25,7 @@ export function UserNav() {
     if (auth) {
       try {
         await signOut(auth);
-        router.push('/');
+        router.push('/acceso');
       } catch (error) {
         console.error('Error al cerrar sesión:', error);
       }

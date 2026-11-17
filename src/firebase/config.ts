@@ -5,10 +5,7 @@
  * Utiliza variables de entorno validadas.
  */
 
-import { env, validateEnv } from '@/lib/env';
-
-// Validamos el entorno en el momento de la importación
-validateEnv();
+import { env } from '@/lib/env';
 
 export const firebaseConfig = {
   apiKey: env.NEXT_PUBLIC_FIREBASE_API_KEY,

@@ -1,6 +1,7 @@
 import { SidebarProvider, Sidebar, SidebarInset } from '@/components/ui/sidebar';
 import { MainNav } from '@/components/main-nav';
 import { Header } from '@/components/header';
+import { AppProviders } from '@/components/providers/app-providers';
 
 export default function MainLayout({
   children,
@@ -8,6 +9,7 @@ export default function MainLayout({
   children: React.ReactNode
 }) {
   return (
+    <AppProviders>
     <SidebarProvider>
       <Sidebar collapsible="icon" variant="sidebar">
         <MainNav />
@@ -19,5 +21,6 @@ export default function MainLayout({
         </main>
       </SidebarInset>
     </SidebarProvider>
+    </AppProviders>
   )
 }

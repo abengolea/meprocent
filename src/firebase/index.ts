@@ -3,6 +3,7 @@ import { getAuth, Auth } from 'firebase/auth';
 import { getFirestore, Firestore } from 'firebase/firestore';
 import { getStorage, FirebaseStorage } from 'firebase/storage';
 import { firebaseConfig } from './config';
+import { hasFirebaseEnv } from '@/lib/env';
 
 let firebaseApp: FirebaseApp | null = null;
 let auth: Auth | null = null;
@@ -15,8 +16,7 @@ export function initializeFirebase() {
   }
 
   try {
-    if (!firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
-      console.warn('Firebase API Key missing or placeholder. Please check your .env file.');
+    if (!hasFirebaseEnv() || !firebaseConfig.apiKey || firebaseConfig.apiKey === 'YOUR_API_KEY') {
       return { firebaseApp: null, auth: null, firestore: null, storage: null };
     }
 
