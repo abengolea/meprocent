@@ -84,8 +84,8 @@ export default function AccesoPage() {
       </Link>
       <Card className="w-full max-w-md border-white/10 bg-card shadow-2xl">
         <CardHeader className="pb-2 text-center">
-          <div className="mb-6 flex justify-center rounded-md bg-[#14263b] px-6 py-5">
-            <MeprocentBrand size="xl" priority />
+          <div className="mb-6 flex justify-center px-2 py-2">
+            <MeprocentBrand size="xl" priority className="max-w-full" />
           </div>
           <CardTitle className="text-xl font-bold">Portal de gestión</CardTitle>
           <CardDescription>Acceso para clientes y equipo MEPROCENT</CardDescription>

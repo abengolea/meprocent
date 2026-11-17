@@ -91,8 +91,8 @@ export default function CertificarPage() {
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="mb-8 flex justify-center rounded-md bg-[#14263b] px-8 py-6">
-          <MeprocentBrand size="xl" />
+        <div className="mb-8 flex justify-center px-4 py-4">
+          <MeprocentBrand size="xl" className="max-w-full" />
         </div>
 
         <Card className="border-t-4 border-t-primary">

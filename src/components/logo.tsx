@@ -3,8 +3,11 @@
 import Image from 'next/image';
 import { cn } from '@/lib/utils';
 
-const BRAND_LOGO = '/brand/meprocent-logo.jpg';
-const LOGO_AR = 1024 / 409;
+/** Logotipo horizontal con transparencia */
+const BRAND_LOGO = '/brand/meprocent-logo.png';
+/** Isotipo casco (transparencia) — favicon, sidebar, etc. */
+const BRAND_MARK = '/brand/meprocent-mark.png';
+const LOGO_AR = 1024 / 341;
 
 const SIZE_PX = {
   xs: 32,
@@ -38,19 +41,16 @@ export function MeprocentBrand({
 
   if (variant === 'mark') {
     return (
-      <span
-        className={cn('relative inline-flex shrink-0 overflow-hidden', className)}
-        style={{ width: height, height }}
-      >
-        <Image
-          src={BRAND_LOGO}
-          alt="MEPROCENT"
-          fill
-          priority={priority}
-          className="object-cover object-left select-none"
-          sizes={`${height}px`}
-        />
-      </span>
+      <Image
+        src={BRAND_MARK}
+        alt="MEPROCENT"
+        width={1024}
+        height={1024}
+        priority={priority}
+        className={cn('h-auto w-auto shrink-0 select-none', className)}
+        style={{ height, width: height }}
+        sizes={`${height}px`}
+      />
     );
   }
 
@@ -59,7 +59,7 @@ export function MeprocentBrand({
       src={BRAND_LOGO}
       alt="MEPROCENT Soluciones Industriales SRL"
       width={1024}
-      height={409}
+      height={341}
       priority={priority}
       className={cn('h-auto w-auto select-none', className)}
       style={{ height, width: 'auto', maxWidth: height * LOGO_AR }}

@@ -30,7 +30,7 @@ export function HeroVisual() {
 
       <div className="absolute -bottom-6 -left-4 hidden rounded-sm border border-white/10 bg-secondary/95 p-4 shadow-xl backdrop-blur-sm sm:block lg:-left-10">
         <div className="flex items-center gap-3">
-          <MeprocentBrand variant="mark" size="lg" />
+          <MeprocentBrand variant="mark" size="lg" className="drop-shadow-lg" />
           <div>
             <p className="font-headline text-sm font-bold uppercase tracking-wide text-white">Integridad</p>
             <p className="text-xs text-white/60">Estáticos · presión · piping</p>

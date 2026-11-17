@@ -10,6 +10,13 @@ export const metadata: Metadata = {
   },
   description:
     'Ingeniería de confiabilidad, mantenimiento predictivo e integridad mecánica. Inspección API 653 y servicios especializados para la industria.',
+  icons: {
+    icon: [
+      { url: '/brand/meprocent-mark.png', type: 'image/png' },
+      { url: '/favicon.ico', sizes: 'any' },
+    ],
+    apple: '/apple-icon.png',
+  },
 };
 
 export default function RootLayout({
