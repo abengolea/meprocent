@@ -18,12 +18,12 @@ body {
     --popover: 0 0% 100%;
     --popover-foreground: 212 38% 10%;
     
-    /* Industrial Orange #f07d22 */
-    --primary: 27 88% 54%;
+    /* Industrial Orange #F07D3F (logo oficial) */
+    --primary: 22 86% 59%;
     --primary-foreground: 0 0% 100%;
     
-    /* Navy Blue #1a2b3c */
-    --secondary: 212 38% 17%;
+    /* Navy Blue #14263B (logo oficial) */
+    --secondary: 212 49% 15%;
     --secondary-foreground: 0 0% 100%;
     
     --muted: 212 20% 92%;
@@ -41,8 +41,7 @@ body {
     
     --radius: 0.5rem;
     
-    /* Sidebar matching Navy Blue #1a2b3c */
-    --sidebar-background: 212 38% 17%;
+    --sidebar-background: 212 49% 15%;
     --sidebar-foreground: 210 20% 98%;
     --sidebar-primary: 27 88% 54%;
     --sidebar-primary-foreground: 0 0% 100%;
@@ -95,7 +94,7 @@ body {
 
 @layer utilities {
   .landing-hero-mesh {
-    background-color: #0f1a24;
+    background-color: #14263b;
     background-image:
       linear-gradient(105deg, transparent 40%, rgba(240, 125, 34, 0.06) 50%, transparent 60%),
       linear-gradient(rgba(255, 255, 255, 0.045) 1px, transparent 1px),

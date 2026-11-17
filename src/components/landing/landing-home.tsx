@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 import { HeroVisual } from '@/components/landing/hero-visual';
 import { SiteHeader } from '@/components/landing/site-header';
-import { MeprocentLogo } from '@/components/logo';
+import { MeprocentBrand } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
 
@@ -124,7 +124,7 @@ export function LandingHome() {
 
       {/* Hero */}
       <section
-        className="relative isolate overflow-hidden bg-[#0f1a24] pt-[4.25rem] text-white"
+        className="relative isolate overflow-hidden bg-[#14263b] pt-[5.5rem] text-white sm:pt-24"
         aria-labelledby="hero-heading"
       >
         <div className="landing-hero-mesh pointer-events-none absolute inset-0" aria-hidden />
@@ -135,7 +135,7 @@ export function LandingHome() {
         />
         <div className="pointer-events-none absolute bottom-0 left-0 right-0 h-px bg-gradient-to-r from-transparent via-white/15 to-transparent" />
 
-        <div className="relative mx-auto grid min-h-[calc(100vh-4.25rem)] max-w-6xl items-center gap-12 px-4 py-14 sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-8 lg:py-20">
+        <div className="relative mx-auto grid min-h-[calc(100vh-5.5rem)] max-w-6xl items-center gap-12 px-4 py-14 sm:min-h-[calc(100vh-6rem)] sm:px-6 lg:grid-cols-[1.05fr_0.95fr] lg:gap-10 lg:px-8 lg:py-20">
           <div className="max-w-xl lg:max-w-none">
             <p className="mb-5 inline-flex items-center gap-2 rounded-sm border border-white/12 bg-white/[0.04] px-3 py-1.5 text-[11px] font-semibold uppercase tracking-[0.22em] text-white/85">
               <span className="h-1.5 w-1.5 animate-pulse rounded-full bg-primary" />
@@ -455,14 +455,13 @@ export function LandingHome() {
         </div>
       </section>
 
-      <footer className="border-t border-white/10 bg-[#0f1923] py-10 text-white/60">
+      <footer className="border-t border-white/10 bg-[#172636] py-10 text-white/60">
         <div className="mx-auto flex max-w-6xl flex-col items-center justify-between gap-6 px-4 sm:flex-row sm:px-6 lg:px-8">
-          <div className="flex items-center gap-3">
-            <MeprocentLogo className="h-10 w-10" />
-            <div>
-              <p className="font-headline text-sm font-bold uppercase tracking-wider text-white">MEPROCENT SRL</p>
-              <p className="text-xs">Soluciones industriales con foco en ingeniería especializada.</p>
-            </div>
+          <div className="flex flex-col gap-3 sm:items-start">
+            <MeprocentBrand size="md" />
+            <p className="max-w-xs text-center text-xs sm:text-left">
+              Soluciones industriales con foco en ingeniería especializada.
+            </p>
           </div>
           <p className="text-center text-xs sm:text-right">
             © {new Date().getFullYear()} MEPROCENT Soluciones Industriales SRL. Todos los derechos reservados.

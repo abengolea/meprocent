@@ -1,10 +1,10 @@
-import { MeprocentLogo } from '@/components/logo';
+import { MeprocentBrand } from '@/components/logo';
 
 /** Ilustración técnica del hero — sin fotos de fondo. */
 export function HeroVisual() {
   return (
     <div className="relative mx-auto w-full max-w-md lg:max-w-none" aria-hidden>
-      <div className="landing-hero-panel relative aspect-[4/5] w-full max-w-[22rem] overflow-hidden rounded-sm border border-white/10 bg-[#0c151d] shadow-2xl shadow-black/40 lg:ml-auto lg:max-w-none">
+      <div className="landing-hero-panel relative aspect-[4/5] w-full max-w-[22rem] overflow-hidden rounded-sm border border-white/10 bg-[#172636] shadow-2xl shadow-black/40 lg:ml-auto lg:max-w-none">
         <svg
           className="absolute inset-0 h-full w-full text-white/[0.07]"
           xmlns="http://www.w3.org/2000/svg"
@@ -30,7 +30,7 @@ export function HeroVisual() {
 
       <div className="absolute -bottom-6 -left-4 hidden rounded-sm border border-white/10 bg-secondary/95 p-4 shadow-xl backdrop-blur-sm sm:block lg:-left-10">
         <div className="flex items-center gap-3">
-          <MeprocentLogo className="h-12 w-12" />
+          <MeprocentBrand variant="mark" size="lg" />
           <div>
             <p className="font-headline text-sm font-bold uppercase tracking-wide text-white">Integridad</p>
             <p className="text-xs text-white/60">Estáticos · presión · piping</p>

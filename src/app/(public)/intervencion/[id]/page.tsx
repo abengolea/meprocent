@@ -5,7 +5,7 @@ import { doc, getDoc } from "firebase/firestore";
 import { initializeFirebase } from "@/firebase";
 import { Intervencion } from "@/lib/types";
 import { PestControlDossier } from "@/components/interventions/pest-control-dossier";
-import { MeprocentLogo, MeprocentText } from "@/components/logo";
+import { MeprocentBrand } from "@/components/logo";
 
 const { firestore: db } = initializeFirebase();
 
@@ -32,7 +32,7 @@ export default async function PublicIntervencionPage({
         return (
             <div className="min-h-screen flex items-center justify-center p-4 bg-muted">
                 <div className="text-center space-y-4">
-                    <MeprocentLogo className="mx-auto h-16 w-16" />
+                    <MeprocentBrand size="lg" className="mx-auto" />
                     <h1 className="text-xl font-bold">Acceso Denegado</h1>
                     <p className="text-muted-foreground">El enlace de certificación no es válido o ha expirado.</p>
                 </div>
@@ -43,9 +43,8 @@ export default async function PublicIntervencionPage({
     return (
         <div className="min-h-screen bg-muted/30 pb-12">
             <header className="bg-secondary text-white p-4 shadow-md mb-6">
-                <div className="max-w-4xl mx-auto flex items-center gap-4">
-                    <MeprocentLogo className="h-10 w-10" />
-                    <MeprocentText subtext={false} />
+                <div className="mx-auto flex max-w-4xl items-center">
+                    <MeprocentBrand size="md" />
                 </div>
             </header>
 

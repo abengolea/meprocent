@@ -37,7 +37,7 @@ import {
 import { useState, useEffect } from 'react';
 import { QrScanner } from './equipment/qr-scanner';
 import { useUser } from '@/firebase';
-import { MeprocentLogo, MeprocentText } from './logo';
+import { MeprocentBrand } from './logo';
 
 const rolesEquipos = ['admin', 'super_admin', 'supervisor', 'tecnico', 'tecnico_senior'];
 
@@ -92,9 +92,10 @@ export function MainNav() {
 
   return (
     <nav className="flex flex-col h-full bg-sidebar">
-       <div className="flex items-center gap-3 h-20 border-b border-sidebar-border px-4 shrink-0">
-          <MeprocentLogo className="h-10 w-10" />
-          <MeprocentText className="text-white" subtext={false} />
+       <div className="flex h-20 items-center border-b border-sidebar-border px-3 shrink-0">
+          <Link href="/" className="min-w-0">
+            <MeprocentBrand size="sm" className="max-h-9 w-auto" />
+          </Link>
         </div>
 
       <div className="flex-1 overflow-y-auto">

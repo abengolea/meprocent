@@ -4,7 +4,7 @@ import * as React from 'react';
 import Link from 'next/link';
 import { Menu, X } from 'lucide-react';
 import { cn } from '@/lib/utils';
-import { MeprocentLogo, MeprocentText } from '@/components/logo';
+import { MeprocentBrand } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 
 const NAV = [
@@ -38,14 +38,13 @@ export function SiteHeader() {
       className={cn(
         'fixed inset-x-0 top-0 z-50 transition-[background-color,box-shadow,border-color] duration-300',
         scrolled
-          ? 'border-b border-white/10 bg-[#0f1a24]/95 shadow-lg shadow-black/25 backdrop-blur-md'
+          ? 'border-b border-white/10 bg-[#14263b]/95 shadow-lg shadow-black/25 backdrop-blur-md'
           : 'bg-transparent',
       )}
     >
-      <div className="mx-auto flex h-[4.25rem] max-w-6xl items-center justify-between gap-4 px-4 sm:px-6 lg:px-8">
-        <Link href="/" className="flex items-center gap-3" onClick={() => setOpen(false)}>
-          <MeprocentLogo className="h-11 w-11 shrink-0" />
-          <MeprocentText className="text-white [&_span:first-child]:text-white [&_span:last-child]:text-primary" />
+      <div className="mx-auto flex h-[5.5rem] max-w-6xl items-center justify-between gap-4 px-4 sm:h-24 sm:px-6 lg:px-8">
+        <Link href="/" className="flex shrink-0 items-center py-1" onClick={() => setOpen(false)}>
+          <MeprocentBrand size="2xl" priority className="max-w-[min(88vw,24rem)] sm:max-w-[28rem]" />
         </Link>
 
         <nav className="hidden items-center gap-8 md:flex" aria-label="Principal">

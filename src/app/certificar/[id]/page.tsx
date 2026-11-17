@@ -10,7 +10,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from '@/com
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { SignaturePad } from '@/components/interventions/signature-pad';
-import { MeprocentLogo, MeprocentText } from '@/components/logo';
+import { MeprocentBrand } from '@/components/logo';
 import { CheckCircle2, Loader2, Download, AlertTriangle, FileText, ShieldCheck } from 'lucide-react';
 import { useToast } from '@/hooks/use-toast';
 import { formatDate } from '@/lib/utils';
@@ -91,9 +91,8 @@ export default function CertificarPage() {
   return (
     <div className="min-h-screen bg-muted/30 p-4 md:p-8">
       <div className="max-w-3xl mx-auto space-y-6">
-        <div className="flex flex-col items-center gap-4 mb-8">
-          <MeprocentLogo className="h-16 w-16" />
-          <MeprocentText className="text-center" />
+        <div className="mb-8 flex justify-center rounded-md bg-[#14263b] px-8 py-6">
+          <MeprocentBrand size="xl" />
         </div>
 
         <Card className="border-t-4 border-t-primary">
