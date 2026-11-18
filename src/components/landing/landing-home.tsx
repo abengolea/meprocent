@@ -8,6 +8,8 @@ import {
   Cog,
   Droplets,
   Factory,
+  FileDown,
+  FileText,
   FlaskConical,
   Gauge,
   Mail,
@@ -21,6 +23,9 @@ import { SiteHeader } from '@/components/landing/site-header';
 import { MeprocentBrand } from '@/components/logo';
 import { Button } from '@/components/ui/button';
 import { cn } from '@/lib/utils';
+
+/** Carpeta institucional 2026 (mismo contenido que la presentación comercial). */
+const CORPORATE_PDF = '/downloads/meprocent-carpeta-2026.pdf';
 
 const SPECIALIZATIONS = [
   {
@@ -78,7 +83,7 @@ const HIGHLIGHT_SERVICES = [
   { title: 'Recipientes y calderas', desc: 'Inspección de equipos a presión.', icon: Cog },
   { title: 'Vibraciones', desc: 'Diagnóstico de condición en rotativos.', icon: Activity },
   { title: 'Lubricación', desc: 'Programas y auditorías de confiabilidad.', icon: Droplets },
-  { title: 'Soldaduras Nivel 3', desc: 'Inspección técnica especializada.', icon: Wrench },
+  { title: 'Soldaduras Nivel 2', desc: 'Inspección técnica especializada.', icon: Wrench },
   { title: 'Piping e integridad', desc: 'Montajes y soporte en planta.', icon: FlaskConical },
 ] as const;
 
@@ -92,7 +97,7 @@ const METHODOLOGY = [
 const CERTIFICATIONS = [
   'Inspector de tanques API 653 (curso IAS y examen API aprobados)',
   'Inspector de calderas y recipientes a presión (INTI)',
-  'Analista de vibraciones categoría III (ISO 18436-2)',
+  'Analista de vibraciones categoría II (ISO 18436-2)',
   'Analista de lubricantes de máquinas nivel II (ISO 18436-4)',
   'Especialista en confiabilidad industrial (Universidad Austral)',
   'Inspección de soldaduras — especialidad técnica informada',
@@ -207,6 +212,12 @@ export function LandingHome() {
               normas API, junto con respaldo técnico en recipientes a presión, análisis de vibraciones y gestión de
               lubricación.
             </p>
+            <Button asChild variant="outline" className="mt-8 gap-2">
+              <a href={CORPORATE_PDF} download="MEPROCENT_Carpeta_2026.pdf" target="_blank" rel="noopener noreferrer">
+                <FileDown className="h-4 w-4" />
+                Descargar carpeta 2026 (PDF)
+              </a>
+            </Button>
           </div>
 
           <div className="rounded-lg border border-border bg-card p-8 shadow-sm">
@@ -230,6 +241,34 @@ export function LandingHome() {
                 </li>
               ))}
             </ul>
+          </div>
+        </div>
+      </section>
+
+      <section id="carpeta" className="scroll-mt-24 border-b border-border bg-muted/40 py-14 sm:py-16">
+        <div className="mx-auto max-w-6xl px-4 sm:px-6 lg:px-8">
+          <div className="flex flex-col items-start gap-6 rounded-lg border border-border bg-card p-8 shadow-sm sm:flex-row sm:items-center sm:justify-between">
+            <div className="flex gap-4">
+              <span className="flex h-12 w-12 shrink-0 items-center justify-center rounded-md bg-primary/10 text-primary">
+                <FileText className="h-6 w-6" aria-hidden />
+              </span>
+              <div>
+                <h2 className="font-headline text-xl font-bold uppercase tracking-tight text-secondary">
+                  Carpeta corporativa 2026
+                </h2>
+                <p className="mt-2 max-w-xl text-sm leading-relaxed text-muted-foreground">
+                  Presentación en PDF con servicios, metodología, mercados, equipo y contacto. Ideal para compartir con
+                  mantenimiento, ingeniería o compras en tu planta.
+                </p>
+                <p className="mt-1 text-xs text-muted-foreground/80">PDF · 6 secciones · ~2,3&nbsp;MB</p>
+              </div>
+            </div>
+            <Button asChild size="lg" className="w-full shrink-0 gap-2 sm:w-auto">
+              <a href={CORPORATE_PDF} download="MEPROCENT_Carpeta_2026.pdf" target="_blank" rel="noopener noreferrer">
+                <FileDown className="h-4 w-4" />
+                Descargar PDF
+              </a>
+            </Button>
           </div>
         </div>
       </section>
@@ -448,6 +487,17 @@ export function LandingHome() {
                   className="border-white/30 bg-transparent text-white hover:bg-white/10"
                 >
                   <Link href="/acceso">Acceso al portal</Link>
+                </Button>
+                <Button
+                  asChild
+                  size="lg"
+                  variant="outline"
+                  className="border-white/30 bg-transparent text-white hover:bg-white/10"
+                >
+                  <a href={CORPORATE_PDF} download="MEPROCENT_Carpeta_2026.pdf" target="_blank" rel="noopener noreferrer">
+                    <FileDown className="mr-2 h-4 w-4" />
+                    Carpeta 2026
+                  </a>
                 </Button>
               </div>
             </div>
